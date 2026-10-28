@@ -1,0 +1,180 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Pagella}
+\newfontfamily\headfont{Inter}[UprightFont=*-ExtraBold,BoldFont=*-ExtraBold,Extension=.otf,Path=/usr/share/fonts/opentype/inter/]
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage{graphicx,booktabs,float,caption,array,xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{titlesec}
+\usepackage{setspace}
+\setstretch{1.05}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.8}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.75}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\titleformat{\section}{\headfont\Large}{\thesection}{0.8em}{}
+\titleformat{\subsection}{\headfont\large}{\thesubsection}{0.8em}{}
+\captionsetup{font=small,labelfont=bf}
+\urlstyle{same}
+\hypersetup{pdftitle={Where Would You Go to University?},pdfauthor={Tristan Hotham}}
+
+\begin{document}
+\begin{center}
+{\Large\bfseries Where Would You Go to University?\\[2pt] Each Country's Number One Study Destination, {{meta.first_year}} to {{meta.last_year}}, from UNESCO Data\par}
+\vspace{1.2em}
+{\large Tristan Hotham\par}
+\vspace{0.3em}
+{\small Independent researcher\\
+ORCID: 0000-0003-4931-9349\\
+DOI: \href{https://doi.org/10.5281/zenodo.23748258}{https://doi.org/10.5281/zenodo.23748258}\par}
+\vspace{0.8em}
+2026
+\end{center}
+
+\begin{quote}
+\small
+\begin{center}\textbf{Abstract}\end{center}
+Where do a country's students go when they study abroad? I use the bilateral table of internationally mobile tertiary students published by the UNESCO Institute for Statistics (UIS), in which each host country reports its students by country of origin, to find each country's number one destination in every year from {{meta.first_year}} to {{meta.last_year}}. Reporting gaps are filled only between reported years, and countries whose answer could change because a large host gives no breakdown are flagged rather than hidden. In {{meta.last_year}} the table counts {{v.students_counted_last|int}} students in {{meta.hosts_last|int}} hosts. The United States is the most common number one ({{v.n_usa_last|int}} countries), followed by the United Kingdom ({{v.n_gbr_last|int}}), France ({{v.n_fra_last|int}}), Australia ({{v.n_aus_last|int}}) and Germany ({{v.n_deu_last|int}}). Old routes persist: Russia is number one for all five Central Asian republics and Portugal for every Portuguese-speaking African country, but France's share of students from French-speaking sub-Saharan Africa fell from {{v.fra_franco_first|pct}} to {{v.fra_franco_last|pct}}. New hosts have grown fast: Turkey's international students rose {{magnets.TUR.x|f1}} times from {{magnets.TUR.y0}} to {{magnets.TUR.y1}}, and it is now first for Syria, Azerbaijan and Iran. India has not overtaken China as a sender worldwide on UNESCO's estimate ({{v.ind_out_last|int}} against {{v.chn_out_last|int}}), but it has in the United Kingdom, which HESA's provider-level data confirm for {{uk.india_over_china_first_year}}. China, the United Arab Emirates and Singapore report no origins, which is the main limit of the method.
+
+\textbf{Keywords:} international students; student mobility; higher education; UNESCO Institute for Statistics; HESA; migration; language; colonial ties; data visualisation; open data
+\end{quote}
+
+\section{Introduction}
+
+About six million students now study at university in a country other than their own. The decision of where to go is personal, but across a whole country the choices add up to strong and surprisingly stable patterns. Students from Nigeria go to Britain, students from Kazakhstan to Russia, students from Senegal to France. A shared language, a former empire, an exam system built on the same model and the presence of earlier students all make some destinations easier than others.
+
+This note asks a simple question of an open table: for each country and each year, where do most of its students who go abroad study? Answering it country by country gives a world map that can be animated over a quarter of a century, and that is the centre of the accompanying interactive page (\url{https://maps.tristanhotham.com/study-abroad/}). The map is meant to be read in the way the question is asked in conversation, ``where would you go?'', so it shows only the single most common destination. The interactive explorer and the published tables give the full distribution.
+
+Three themes run through the results. First, the persistence of routes laid down by empires and languages. Second, the rise of new hosts, especially Turkey, South Korea, Malaysia, Russia and the Gulf, alongside the established English-speaking destinations. Third, the changing balance between the two largest senders, China and India. A final section looks at the United Kingdom university by university using data from the Higher Education Statistics Agency (HESA).
+
+\section{Data}
+
+\subsection{UNESCO bilateral table}
+
+The UIS collects education statistics from national authorities. Among them is the number of internationally mobile students enrolled in tertiary education in each country, broken down by country of origin. Internationally mobile students are those who have crossed a border to study, identified by their country of prior education or permanent residence where possible, rather than by citizenship. I retrieved the table through the UIS data API (release {{meta.uis_version}}, extracted {{meta.uis_retrieved}}) as {{v.n_origin_indicators|int}} indicators, one for each country of origin plus ``unknown'', each giving the count in every reporting host and year. I also took each country's total inbound students, the UIS estimate of its total outbound students (which UIS builds from all host reports), and tertiary enrolment. UIS reference years refer to the academic year ending in that year. UIS data are licensed CC BY-SA 4.0.
+
+The raw table has {{meta.reported_rows|int}} non-zero host, origin and year rows from {{meta.hosts_any_bilateral|int}} hosts and {{meta.origins|int}} origins. Reporting is uneven. Some hosts report every year; others skip years, report only a total, or report a breakdown that covers only part of their students. The analysis runs from {{meta.first_year}}, the first year with broad reporting, to {{meta.last_year}}, the last year before reporting thins out.
+
+\subsection{OECD check}
+
+The OECD Education at a Glance database publishes, for its members and partner hosts, the share of each origin country's mobile students who study in each destination (Data Explorer dataflow DF\_UOE\_NF\_SHARE\_MOB\_DEST, extracted {{meta.oecd_retrieved}}, CC BY 4.0). It is built from the same national returns and so is not independent of UIS, but it is compiled separately and is a useful check on how the table has been read.
+
+\subsection{HESA Table 28}
+
+For the United Kingdom, HESA publishes non-UK students at every provider by country of permanent address, level and mode of study, for academic years 2014/15 to 2024/25 (Table 28, CC BY 4.0). Counts are rounded to the nearest five. I kept all levels and modes combined, with undergraduate and postgraduate totals, and dropped totals and ``not otherwise specified'' rows. Provider locations come from Wikidata (CC0) through the UK Provider Reference Number.
+
+\section{Methods}
+
+\subsection{Reported and filled years}
+
+A host-year counts as reported when the students it lists by origin add up to at least 30\% of its total inbound students (or, where the total is missing, at least 30\% of its largest reported year). For a host with a missing year between two reported years at most nine years apart, each origin's count is interpolated in a straight line; otherwise the nearest reported year within two years is carried over. Nothing is extrapolated further. Of the {{meta.filled_rows|int}} host, origin and year rows used, {{meta.filled_by_method.reported|int}} are reported, {{meta.filled_by_method.interpolated|int}} interpolated and {{meta.filled_by_method.carried|int}} carried. The most consequential filling is for the United States, which reports a full breakdown for {{meta.first_year}}, 2005 and from 2013 (except 2019 and 2022); its years in between are interpolated.
+
+\subsection{Number one destination}
+
+For each origin and year, the destinations are ranked by students counted, excluding the origin itself and students of unknown origin. The number one destination is the host with the most students. Its share is taken of all students from that origin counted in the table, which is smaller than UIS's estimate of total outbound students because some hosts give no breakdown. Countries with fewer than 50 students counted abroad are not ranked.
+
+\subsection{Uncertainty flags}
+
+A host that reports nothing by origin in a year cannot be ranked, and its absence can change another country's answer. For every host-year without data I take the host's nearest reported breakdown, scale it by the change in the host's total inbound students where both totals are known, and compare the result with the counted number one for each origin. If the estimate reaches 70\% of the counted number one, the origin-year is flagged as uncertain and the host is named. This flags {{v.unc_first|int}} countries in {{meta.first_year}} and {{v.unc_last|int}} in {{meta.last_year}}. The hosts most often named are Germany (which reports origins to UIS only from {{v.deu_first_year}}), the United Arab Emirates (no breakdown after 2012), Fiji (for Pacific island states) and Argentina (no breakdown from 2001 to 2015). Hosts that never report origins (China, Singapore and Lebanon among the larger ones) cannot be tested this way and are discussed in Section~\ref{sec:limits}.
+
+\subsection{Blocs and growth}
+
+Five groups of countries are defined by official language or region: French-official sub-Saharan Africa (19 countries), the Maghreb (Algeria, Morocco, Tunisia), English-official Africa (15), the five Central Asian republics, and Portuguese-speaking Africa (5). For each group and year I compute the share of its students counted abroad who study in the old centre (France, Russia, Portugal or the United Kingdom). Growth of hosts uses UIS inbound totals, which exist for some hosts that give no breakdown.
+
+\section{Results}
+
+\subsection{The map}
+
+Figure~\ref{fig:map} shows each country's number one destination in {{meta.last_year}}, and Figure~\ref{fig:years} shows four years. Table~\ref{tab:counts} counts the countries for which each host is number one.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_map.png}
+\caption{Each country coloured by its students' number one study destination in {{meta.last_year}}. Stronger colour means a larger share go there. Circles mark destinations, sized and numbered by how many countries pick them. Dashed outlines: uncertain, because a host without origin data could plausibly be first. Grey: not ranked. Source: UIS.}\label{fig:map}\end{figure}
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_years.png}
+\caption{Number one destinations in {{meta.first_year}}, 2005, 2013 and {{meta.last_year}}. Early years lack German and (from 2000) Japanese breakdowns.}\label{fig:years}\end{figure}
+
+{{TABLE_COUNTS}}
+
+The United States leads in every year, but its lead narrows from {{v.n_usa_first|int}} countries in {{meta.first_year}} to {{v.n_usa_last|int}} in {{meta.last_year}}. Part of the fall reflects gaps in the early data: Germany is absent until {{v.deu_first_year}} and its absence inflates the American count. Comparing only countries that are not flagged as uncertain in either year, the United States was first for {{changed_2013.count_a.USA|int}} of {{changed_2013.n_both|int}} countries in 2013 and {{changed_2013.count_b.USA|int}} in {{meta.last_year}}; {{changed_2013.n_changed|int}} of those {{changed_2013.n_both|int}} countries changed their number one between the two years. The most common switches were from the United States to Australia and from France to Senegal.
+
+The map has a clear regional structure. North and South America look to the United States, except where Argentina now leads for its neighbours (Brazil, Bolivia, Paraguay, Peru, Colombia and Ecuador are among those it is first for). Francophone Africa looks to France, southern Africa to South Africa, the Pacific to Australia and the United States (with Fiji, which has not reported recently, a possible rival for several island states), Central Asia to Russia. Europe is a patchwork of neighbours: Germans go to Austria, Belgians and Austrians to Germany, Slovaks to the Czech Republic.
+
+\subsection{Empires and languages}
+
+Figure~\ref{fig:blocs} follows the five groups. France's share of students from French-official sub-Saharan Africa fell from {{v.fra_franco_first|pct}} in {{meta.first_year}} to {{v.fra_franco_last|pct}} in {{meta.last_year}}, as Senegal, Morocco, Canada and Turkey took larger shares; Senegal is now first for {{v.sen_tops_last|int}} countries in the group. France's share of students from the Maghreb fell from {{v.fra_maghreb_first|pct}} to {{v.fra_maghreb_last|pct}}, though it remains first for all three. Russia took {{v.rus_ca_last|pct}} of Central Asian students abroad in {{meta.last_year}} and is first for all five republics. Portugal takes {{v.prt_luso_last|pct}} of students from Portuguese-speaking Africa; the dip in that series from 2008 is an artefact, because Portugal's reported total fell from {{v.prt_in_2007|int}} in 2007 to {{v.prt_in_2008|int}} in 2008 when its counting changed. English-official Africa is the one group to move towards its old centre: the United Kingdom's share rose from {{v.gbr_anglo_first|pct}} to {{v.gbr_anglo_last|pct}}, driven by Nigeria, while South Africa's role as a regional hub shrank.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_blocs.png}
+\caption{Share of each group's students counted abroad who study in the old centre. Source: UIS.}\label{fig:blocs}\end{figure}
+
+\subsection{New magnets}
+
+Figure~\ref{fig:magnets} shows inbound totals for seven fast-growing hosts and Table~\ref{tab:magnets} summarises growth. Turkey's international students rose from {{magnets.TUR.v0|int}} in {{magnets.TUR.y0}} to {{magnets.TUR.v1|int}} in {{magnets.TUR.y1}}. In {{magnet_origins.TUR.year}} its largest sources were Syria ({{magnet_origins.TUR.top.0.1|int}}), Azerbaijan ({{magnet_origins.TUR.top.1.1|int}}), Iran ({{magnet_origins.TUR.top.2.1|int}}) and Turkmenistan ({{magnet_origins.TUR.top.3.1|int}}), and Turkey is the number one destination for Syria, Azerbaijan and Iran. South Korea grew {{magnets.KOR.x|f1}} times from {{magnets.KOR.y0}}, with China ({{magnet_origins.KOR.top.0.1|int}}) and Vietnam ({{magnet_origins.KOR.top.1.1|int}}) its largest sources, and it is first for Mongolia. Malaysia grew {{magnets.MYS.x|f1}} times from {{magnets.MYS.y0}}; {{v.mys_chn_share|pct}} of its international students in {{magnet_origins.MYS.year}} came from China. Russia, already large, reached {{magnets.RUS.v1|int}}, with Kazakhstan, China, Uzbekistan and Turkmenistan the largest sources. Kyrgyzstan is a striking small host: {{magnet_origins.KGZ.top.0.1|int}} students from Uzbekistan and {{magnet_origins.KGZ.top.1.1|int}} from India in {{magnet_origins.KGZ.year}}.
+
+Vietnam is the clearest case of a sender changing direction: its number one became Japan in 2017, and in {{meta.last_year}} Japan and South Korea both held more Vietnamese students than the United States in this table. Iran's number one changed from the United States to Turkey.
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_magnets.png}
+\caption{Inbound internationally mobile students in seven fast-growing hosts. Source: UIS totals.}\label{fig:magnets}\end{figure}
+
+{{TABLE_MAGNETS}}
+
+Two large hosts cannot be placed on the map. The United Arab Emirates reported {{magnets.ARE.v1|int}} international students in {{magnets.ARE.y1}} and China {{v.chn_inbound_last|int}}, but neither gives a breakdown by origin in the UIS table for those years. The Emirates' last breakdown (2012) was led by India, Oman, Jordan and Palestine; scaled to its current total, it could be first for several Gulf and Arab countries, which are flagged.
+
+\subsection{India and China}
+
+China has been the largest sender throughout, with {{v.chn_out_first|int}} students abroad in {{meta.first_year}} and {{v.chn_out_last|int}} in {{meta.last_year}} on UIS's estimate (Figure~\ref{fig:ic}). India grew from {{v.ind_out_first|int}} to {{v.ind_out_last|int}}, with most of the growth after 2019. India has not overtaken China worldwide on this estimate, but it has in some hosts. In the United Kingdom UIS counts {{v.gbr_ind_last|int}} Indian and {{v.gbr_chn_last|int}} Chinese students in {{meta.last_year}}; in the United States China remained ahead ({{v.usa_chn_last|int}} against {{v.usa_ind_last|int}}).
+
+\begin{figure}[tbp]\centering\includegraphics[width=\textwidth]{f_india_china.png}
+\caption{Left: students abroad from China and India (UIS estimate). Right: students from four countries in UK higher education (HESA).}\label{fig:ic}\end{figure}
+
+\subsection{The United Kingdom by provider}
+
+HESA shows the same switch at home (Figure~\ref{fig:uk}). Indian students rose from {{uk.top_first.1.1|int}} in {{uk.first_year}} to a peak of {{uk.series.India.2023|int}} in 2022/23, when they first outnumbered Chinese students, and stood at {{uk.top_last.0.1|int}} in {{uk.last_year}} against {{uk.top_last.1.1|int}} from China. Nigeria peaked at {{v.uk_nga_peak|int}} in {{v.uk_nga_peak_year}} and fell to {{v.uk_nga_last|int}}. Pakistan rose to {{uk.top_last.2.1|int}} and Nepal to {{uk.top_last.4.1|int}}. Students from France, Italy and Germany all fell after the United Kingdom left the European Union. Among providers with at least 500 non-UK students, China was the largest source at {{uk.provider_top_counts_2015.China|int}} in {{uk.first_year}} and India at {{uk.provider_top_counts_2015.India|int}}; in {{uk.last_year}} the numbers were {{uk.provider_top_counts_2025.China|int}} and {{uk.provider_top_counts_2025.India|int}}. Indian students are mostly postgraduates ({{uk.levels_last.India.pg|int}} of {{uk.levels_last.India.all|int}}), Chinese students more evenly split ({{uk.levels_last.China.pg|int}} of {{uk.levels_last.China.all|int}}).
+
+\begin{figure}[tbp]\centering\includegraphics[width=0.85\textwidth]{f_uk.png}
+\caption{Non-UK students in UK higher education by country of permanent address, {{uk.first_year}} and {{uk.last_year}}, the twelve largest in {{uk.last_year}}. Source: HESA Table 28.}\label{fig:uk}\end{figure}
+
+\subsection{Checks}
+
+Across {{checks.oecd_pairs|int}} host, origin and year combinations present in both sources, the UIS-based share of an origin's students in a host is within one percentage point of the OECD share in {{checks.oecd_within_1pp|pct}} of cases, with a correlation of {{checks.oecd_corr}} (Figure~\ref{fig:check}). For large shares (5\% or more, {{checks.oecd_big_pairs|int}} pairs) agreement is weaker: only {{checks.oecd_big_within_2pp|pct}} are within two points, because the two sources divide by different estimates of each origin's total students abroad. The ranking of destinations within an origin is not affected by the denominator. For the United Kingdom, the UIS inbound total for {{v.uk_check_year}} ({{v.uk_check_uis|int}}) is within {{v.uk_check_diff|pct1}} of HESA's published total ({{v.uk_check_hesa|int}}).
+
+\begin{figure}[tbp]\centering\includegraphics[width=0.55\textwidth]{f_check.png}
+\caption{UIS-based share of each origin's mobile students in a host against the OECD share for the same host, origin and year.}\label{fig:check}\end{figure}
+
+\section{Discussion}
+
+The single number one destination is a blunt measure, but it is a useful one. It is the answer most students in a country would give, and it changes only when something real shifts. The map's strongest features are old: language and former empire still decide the most common destination for most of Africa and Central Asia. Yet the shares behind those answers have moved a great deal. France remains first for most of French-speaking Africa while taking a much smaller share of its students; regional hubs such as Senegal and Morocco, and newer destinations such as Turkey and Canada, have absorbed much of the growth.
+
+The rise of Turkey, South Korea, Malaysia and Russia shows that the market for international students is no longer only English-speaking. Each new magnet draws on a neighbourhood: Turkey on the Turkic-speaking states and its southern neighbours, Russia on the former Soviet Union, South Korea and Malaysia on East and South East Asia. Some of these flows reflect conflict as much as choice; Syria's turn towards Turkey follows the war.
+
+The India and China comparison shows why the question ``who sends the most'' depends on where you look. Worldwide, China still sends more. In the United Kingdom India overtook China in 2022/23, and among UK providers the most common largest source changed from China to India within a decade.
+
+\section{Limitations}\label{sec:limits}
+
+The method can only rank destinations that report where their students come from. China, Singapore and Lebanon never report origins in the period; the United Arab Emirates stopped after 2012; Germany began only in {{v.deu_first_year}}. Where an absent host could plausibly be first, the country is flagged, but hosts that never report cannot be tested. China's absence matters most for its Asian and African neighbours. Japan reports only part of its students by origin from 2015 (not those from China or South Korea), so its counts are lower bounds.
+
+Filled years are estimates. Straight-line interpolation is reasonable for slowly changing flows but will miss sudden changes inside a gap, as in the United States between 2005 and 2013. Reporting definitions also change, as Portugal's 2008 break shows. Counts of internationally mobile students depend on each country's definition of mobility, and some hosts still count foreign citizens. Students of unknown origin are excluded. Small countries' answers can turn on a handful of students. HESA counts are rounded to the nearest five, and its country list follows ONS names. Distance learners and students on branch campuses abroad are outside these data.
+
+\section{Conclusion}
+
+Over {{v.span_years|int}} years the world map of student destinations kept its old outline while its colours faded and its new magnets brightened. The United States, the United Kingdom and France are still the most common first choices, Russia still holds Central Asia, and Portugal its former colonies, but Turkey, South Korea, Malaysia and the Gulf now draw large numbers, and India's students have overtaken China's in Britain. The interactive page lets readers follow any country's students through the years, in both directions.
+
+\section*{Data and code availability}
+
+Interactive page: \url{https://maps.tristanhotham.com/study-abroad/}. Data and code: \url{https://github.com/Tristan-Hotham/study-abroad}. Archived release with this paper: \url{https://doi.org/10.5281/zenodo.23748258}. Derived data (filled flows, number one destinations, UK providers by domicile, results) are released under CC BY-SA 4.0, as required by the UIS licence; code under MIT.
+
+\section*{AI statement}
+
+I wrote the text, with drafting and editing assistance from Claude (Anthropic), which also helped prepare the analysis code. I reviewed and checked all text and results.
+
+\section*{References}
+\small
+\begin{itemize}\setlength{\itemsep}{2pt}
+\item HESA (2026) Table 28: Non-UK permanent address students by HE provider and country of permanent address, 2014/15 to 2024/25. Higher Education Statistics Agency. \url{https://www.hesa.ac.uk/data-and-analysis/students/table-28}. CC BY 4.0.
+\item Natural Earth (2026) 1:50m Cultural Vectors, Admin 0 Countries. \url{https://www.naturalearthdata.com}. Public domain.
+\item OECD (2026) Education at a Glance database: share of mobile students enrolled at tertiary level by country of destination. OECD Data Explorer. \url{https://data-explorer.oecd.org}. CC BY 4.0.
+\item UNESCO Institute for Statistics (2026) UIS Data API, release {{meta.uis_version}}: inbound internationally mobile students by country of origin; total outbound internationally mobile tertiary students. \url{https://api.uis.unesco.org}. Extracted {{meta.uis_retrieved}}. CC BY-SA 4.0.
+\item Wikidata (2026) UK Provider Reference Number (P4971) and coordinate location (P625). \url{https://www.wikidata.org}. CC0.
+\end{itemize}
+\end{document}

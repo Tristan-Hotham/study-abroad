@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Where Students Go</title>
+<meta name="description" content="Where would you go to university? Every country coloured by where its students most often go abroad, {{meta.first_year|raw}} to {{meta.last_year|raw}}, from UNESCO data, with a flow explorer and a view of UK universities from HESA.">
+<meta property="og:title" content="Where would you go to university?">
+<meta property="og:description" content="Every country coloured by its students' number one study destination, {{meta.first_year|raw}} to {{meta.last_year|raw}}: old empires, language blocs and new magnets such as Turkey, South Korea and Malaysia.">
+<meta property="og:image" content="https://maps.tristanhotham.com/study-abroad/header.png">
+<meta property="og:url" content="https://maps.tristanhotham.com/study-abroad/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Chalk-white paper with ink; destination colours come from the data (page.json) so the map, legend and charts agree. */
+:root{
+  --bg:#F7F5F0; --panel:#EDE9E0; --fg:#1C1D24; --muted:#62636E; --rule:#DCD7CC; --card:#FDFCF8; --border:#C9C3B6;
+  --accent:#2349C9; --accent2:#D62839; --sea:#E6ECEF; --land:#F4F1EA; --line:#5A5C66; --nodata:#EAE6DE;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15161B; --panel:#1F2027; --fg:#ECEBE6; --muted:#A3A3AD; --rule:#33343D; --card:#1C1D24; --border:#474955;
+  --accent:#5C83FF; --accent2:#FF5A68; --sea:#1A1F26; --land:#272932; --line:#CFCFD6; --nodata:#3A3B44; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15161B; --panel:#1F2027; --fg:#ECEBE6; --muted:#A3A3AD; --rule:#33343D; --card:#1C1D24; --border:#474955;
+  --accent:#5C83FF; --accent2:#FF5A68; --sea:#1A1F26; --land:#272932; --line:#CFCFD6; --nodata:#3A3B44; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 18px/1.62 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:hidden}
+.wrap{max-width:700px;margin:0 auto;padding-block:28px 64px}
+.wrap .bleed{width:min(1180px,calc(100vw - 32px));margin-left:calc((100% - min(1180px,100vw - 32px))/2)}
+a{color:inherit;text-decoration-color:var(--accent);text-underline-offset:3px}
+.kicker{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.kicker b{background:var(--fg);color:var(--bg);padding:5px 8px;font-weight:500}
+header.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 24px;align-items:end;border-bottom:6px double var(--fg);padding-bottom:22px;margin-top:18px}
+h1{font:900 clamp(38px,9vw,78px)/.94 var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;background:linear-gradient(90deg,#2349C9,#D62839 40%,#7A3DB8 70%,#F2A900);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mark{width:clamp(70px,15vw,120px);height:auto;display:block}
+.dek{grid-column:1/-1;font-size:21px;line-height:1.42;margin:8px 0 0;max-width:52ch}
+.byline{font:400 13px/1.4 var(--mono);color:var(--muted);margin-top:14px}
+h2{font:800 34px/1.06 var(--display);letter-spacing:-.01em;margin:56px 0 10px;text-wrap:balance}
+h2 .n{font:500 13px/1 var(--mono);color:var(--accent2);display:block;letter-spacing:.1em;margin-bottom:10px}
+h3{font:600 21px/1.25 var(--display);margin:30px 0 6px}
+p{margin:0 0 16px}
+.lede::first-letter{font:900 70px/.8 var(--display);float:left;margin:6px 10px 0 0;color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:26px 0 8px}
+.stats div{background:var(--card);padding:14px 12px}
+.stats b{display:block;font:900 clamp(22px,4.4vw,32px)/1 var(--display);letter-spacing:-.01em}
+.stats span{font:400 12px/1.35 var(--mono);color:var(--muted);display:block;margin-top:6px}
+@media (max-width:600px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.figure{margin:26px 0 30px}
+.fig-h{font:600 19px/1.25 var(--display);margin:0 0 4px}
+.fig-sub{font:400 13px/1.45 var(--mono);color:var(--muted);margin:0 0 12px}
+.src{font:400 12px/1.5 var(--mono);color:var(--muted);margin-top:10px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:var(--mono);fill:var(--fg)}
+.lab{font-size:12px}.lab.m{fill:var(--muted)}.lab.b{font-weight:500}.lab.s{font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font:400 12px/1.45 var(--mono);padding:8px 10px;border-radius:3px;max-width:300px;z-index:1000;transform:translate(-50%,calc(-100% - 12px));display:none}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.ctl-l{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+.btn{font:500 12px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:8px 10px;cursor:pointer;min-height:36px}
+.btn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;max-width:100%;flex-wrap:wrap}
+.seg .btn{border:0;border-radius:0;border-right:1px solid var(--border)}
+.seg .btn:last-child{border-right:0}
+select{font:500 12px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:8px 6px;min-height:36px;max-width:100%}
+.searchbox{position:relative;flex:1 1 240px;min-width:0}
+input[type=search]{font:400 15px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:10px 11px;min-height:40px;width:100%}
+.suggest{position:absolute;left:0;right:0;top:100%;margin:2px 0 0;padding:0;list-style:none;background:var(--card);border:1px solid var(--border);z-index:1001;font:400 13px/1.3 var(--mono);display:none;max-height:340px;overflow:auto}
+.suggest li{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--rule)}
+.suggest li span{color:var(--muted)}
+.suggest li[aria-selected="true"],.suggest li:hover{background:var(--panel)}
+.timebar{display:flex;gap:12px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.yearbig{font:900 46px/1 var(--display);letter-spacing:-.02em;min-width:3.2ch}
+.timebar input[type=range]{flex:1 1 220px;accent-color:var(--fg);min-width:0}
+.play{font:600 13px/1 var(--mono);min-width:86px}
+.mapgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+@media (max-width:920px){.mapgrid{grid-template-columns:minmax(0,1fr)}}
+.side{background:var(--card);border:1px solid var(--border);padding:12px 12px 10px;font:400 13px/1.45 var(--mono);min-width:0}
+.side h4{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+.side h4:first-child{margin-top:2px}
+.mapbox{position:relative}
+#lmap{height:600px;border:1px solid var(--border);background:var(--sea);border-radius:2px}
+@media (max-width:600px){#lmap{height:440px}}
+.leaflet-container{font:400 12px/1.4 var(--mono);background:var(--sea)}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 13px/1.4 var(--mono);color:var(--muted);background:color-mix(in srgb,var(--panel) 80%,transparent);z-index:900;pointer-events:none}
+.lyrBtn{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;font:600 12px/1 var(--mono);padding:8px 10px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.lyrBtn[aria-expanded="true"]{background:var(--fg);color:var(--bg)}
+.lyrPanel{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:10px 12px 8px;margin-top:6px;width:240px;box-shadow:0 2px 10px rgba(0,0,0,.15);font:400 12px/1.3 var(--mono)}
+.lyrPanel[hidden]{display:none}
+.lyrPanel .row{margin:0 0 9px}
+.lyrPanel label{display:flex;gap:6px;align-items:center;cursor:pointer;font-weight:600}
+.lyrPanel input[type=range]{width:100%;accent-color:var(--fg)}
+.lyrPanel select{font:400 12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:2px;padding:2px 4px;width:100%;min-height:26px}
+.lyrPanel .sub{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:11px;margin-top:3px}
+.lyrPanel .sub span{flex:0 0 58px}
+.lyrPanel .reset{font:400 11px var(--mono);color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.town{font:500 11px/1 var(--mono);color:var(--fg);white-space:nowrap;text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 2px var(--bg);pointer-events:none}
+.town i{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--fg);margin-right:4px;vertical-align:1px}
+.town.r3{font-weight:600;font-size:12px}
+.town.r0,.town.r1{font-weight:400;font-size:10.5px}
+.sat .town{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+.sat .town i{background:#fff}
+.hostlab{font:700 11px/1.1 var(--mono);color:#fff;white-space:nowrap;text-shadow:0 0 3px rgba(0,0,0,.65);pointer-events:none;text-align:center}
+.leaflet-tooltip{font:400 12px/1.4 var(--mono);background:var(--fg);color:var(--bg);border:0;border-radius:3px;box-shadow:none}
+.leaflet-tooltip:before{display:none}
+.leaflet-bar a,.leaflet-bar a:hover{background:var(--card);color:var(--fg);border-bottom-color:var(--border)}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--card) 85%,transparent)!important;color:var(--muted)}
+.leaflet-control-attribution a{color:var(--fg)}
+.keys{display:flex;flex-direction:column;gap:2px;max-height:330px;overflow:auto}
+.key{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:3px;cursor:pointer;border:1px solid transparent;background:none;color:var(--fg);font:400 12.5px/1.2 var(--mono);text-align:left;width:100%}
+.key:hover{background:var(--panel)}
+.key[aria-pressed="true"]{border-color:var(--fg)}
+.key i{flex:0 0 14px;height:14px;border-radius:3px}
+.key b{margin-left:auto;font-weight:500}
+#card{min-height:90px}
+#card .big,#xcard .big{font:800 24px/1.12 var(--display);margin:4px 0 2px;text-wrap:balance}
+#card .sub{color:var(--muted);font-size:12px;margin:0 0 8px}
+.chip{display:inline-block;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:999px;color:#fff;margin:0 4px 4px 0}
+.pull{font:600 26px/1.25 var(--display);border-left:6px solid var(--accent2);padding:4px 0 4px 18px;margin:30px 0}
+.note{background:var(--panel);border:1px solid var(--rule);padding:14px 16px;font-size:16px;margin:22px 0}
+.note h3{margin-top:0}
+.warn{font:400 12px/1.45 var(--mono);color:var(--muted);border-left:3px solid var(--accent2);padding-left:8px;margin:8px 0}
+table.t{width:100%;border-collapse:collapse;font:400 13px/1.35 var(--mono)}
+table.t th{text-align:left;font-weight:500;color:var(--muted);border-bottom:2px solid var(--fg);padding:6px 8px 6px 0}
+table.t td{border-bottom:1px solid var(--rule);padding:7px 8px 7px 0;vertical-align:top}
+table.t td.num,table.t th.num{text-align:right;white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.xgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.xgrid{grid-template-columns:minmax(0,1fr)}}
+.xpanel{background:var(--card);border:1px solid var(--border);padding:12px;min-width:0}
+.xpanel h4{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2px 0 10px}
+details{margin:14px 0}
+summary{font:500 13px/1.4 var(--mono);cursor:pointer;color:var(--fg);padding:8px 0}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.cta a{font:500 13px/1 var(--mono);text-decoration:none;border:1px solid var(--fg);padding:11px 14px;border-radius:3px}
+.cta a.p{background:var(--accent);border-color:var(--accent);color:#fff}
+footer{border-top:6px double var(--fg);margin-top:56px;padding-top:16px;font:400 13px/1.55 var(--mono);color:var(--muted)}
+footer p{margin:0 0 10px}
+.theme{position:fixed;right:12px;bottom:12px;z-index:1002}
+@media print{.theme,.controls,.timebar{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker"><b>Data study</b><span>International students</span><span>The world, {{meta.first_year|raw}} to {{meta.last_year|raw}}</span></div>
+<header class="hero">
+  <h1>Where would you go to <em>university?</em></h1>
+  <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M60 4a56 56 0 0 1 0 112M60 4a56 56 0 0 0 0 112M8 44h104M8 76h104" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".4"/><path d="M24 84 Q50 30 86 40" fill="none" stroke="#2349C9" stroke-width="3.5" stroke-linecap="round"/><path d="M30 60 Q62 70 92 78" fill="none" stroke="#D62839" stroke-width="3.5" stroke-linecap="round"/><path d="M38 96 Q70 94 84 60" fill="none" stroke="#F2A900" stroke-width="3.5" stroke-linecap="round"/><path d="M45 37 l15 -8 l15 8 l-15 8z" fill="currentColor"/></svg>
+  <p class="dek">Millions of students leave home to study each year, and most countries have one favourite destination. I coloured every country by where its own students most often go abroad, year by year from {{meta.first_year|raw}} to {{meta.last_year|raw}}. Press play and watch the old empires hold on, the language blocs stick together, and new magnets such as Turkey, South Korea and Malaysia pull students in.</p>
+</header>
+<div class="byline">Dr Tristan Hotham, Independent researcher · 2026 · Data: UNESCO Institute for Statistics (CC BY-SA 4.0); OECD (CC BY 4.0); HESA (CC BY 4.0); Natural Earth</div>
+
+<div class="stats">
+  <div><b style="color:var(--accent)">{{v.students_counted_last_m|raw}}m</b><span>students abroad in the {{meta.last_year|raw}} data, by country of origin</span></div>
+  <div><b style="color:var(--accent)">{{v.n_usa_last|int}}</b><span>countries whose number one destination is the United States in {{meta.last_year|raw}}</span></div>
+  <div><b style="color:#8C1C13">{{magnets.TUR.x|f1}}x</b><span>growth in students studying in Turkey, {{magnets.TUR.y0|raw}} to {{magnets.TUR.y1|raw}}</span></div>
+  <div><b style="color:var(--accent2)">{{uk.india_over_china_first_year|raw}}</b><span>the year India overtook China as the biggest sender to the UK</span></div>
+</div>
+
+<p class="lede">Ask a student in Lagos, Almaty or Dakar where they would go to study abroad and you will often hear the same answer as their neighbours. Nigerians go to Britain, Kazakhs to Russia, Senegalese to France. The reasons are old: a shared language, a shared history, a shared exam system, and family who went before. But the map is not frozen. Over {{v.span_years|int}} years some of the biggest flows in the world have shifted, and a few countries that sent students away now pull them in.</p>
+<p>The source is the UNESCO Institute for Statistics, which collects from each country the number of internationally mobile students in its universities and, for most countries, where they come from. Read the other way round, the same table tells you where each country's students go. In {{meta.last_year|raw}} it covers {{v.students_counted_last|int}} students in {{meta.hosts_last|int}} host countries. Some important hosts do not say where their students come from (China, the United Arab Emirates, Singapore), so the map can only rank destinations that do. I flag that wherever it could change the answer.</p>
+
+<h2 class="bleed"><span class="n">01 · The map</span>Each country's number one destination</h2>
+<div class="bleed">
+<div class="timebar"><button class="btn play" id="play" aria-label="Play the years">▶ Play</button><span class="yearbig" id="yearBig">{{meta.last_year|raw}}</span><input type="range" id="year" min="{{meta.first_year|raw}}" max="{{meta.last_year|raw}}" step="1" value="{{meta.last_year|raw}}" aria-label="Year"></div>
+<div class="controls"><div class="searchbox"><input type="search" id="q" placeholder="Search a country, e.g. Nigeria, Vietnam, Kazakhstan" autocomplete="off" aria-label="Search a country" aria-autocomplete="list" aria-controls="sug"><ul class="suggest" id="sug" role="listbox"></ul></div></div>
+<div class="mapgrid">
+  <div class="mapbox"><div id="lmap" role="application" aria-label="World map of each country's number one study destination"></div><div class="loading" id="loading">Loading the map…</div></div>
+  <aside class="side">
+    <h4>Destinations this year</h4>
+    <div class="keys" id="keys"></div>
+    <h4 id="cardH">Pick a country</h4>
+    <div id="card"><p class="sub">Hover or tap a country. Colour shows where its students most often go; stronger colour means a bigger share go there. Circles mark the destinations, sized by how many countries pick them.</p></div>
+  </aside>
+</div>
+<p class="src" id="mapNote"></p>
+</div>
+
+<p>In {{meta.last_year|raw}} the United States is still the most common number one, chosen by {{v.n_usa_last|int}} countries, followed by the United Kingdom ({{v.n_gbr_last|int}}), France ({{v.n_fra_last|int}}), Australia ({{v.n_aus_last|int}}) and Germany ({{v.n_deu_last|int}}). In {{meta.first_year|raw}} the United States led {{v.n_usa_first|int}} countries. Part of that fall is real and part comes from gaps in the early data: Germany did not report its students by origin to UNESCO until {{v.deu_first_year|raw}}, and its absence flatters the United States. Comparing only countries measured cleanly in both years, the United States was number one for {{changed_2013.count_a.USA|int}} of {{changed_2013.n_both|int}} countries in 2013 and {{changed_2013.count_b.USA|int}} in {{meta.last_year|raw}}.</p>
+
+<h2><span class="n">02 · Explorer</span>Where a country's students go, and where its own students come from</h2>
+<p>Pick a country on the map or below. Leaving shows where its students study abroad; arriving shows where the students in its own universities come from. The year follows the slider above. Hollow points on the lines are years filled in between reported years.</p>
+<div class="controls"><div class="searchbox"><input type="search" id="xq" placeholder="Choose a country" autocomplete="off" aria-label="Choose a country for the explorer" aria-autocomplete="list" aria-controls="xsug"><ul class="suggest" id="xsug" role="listbox"></ul></div><div class="seg" id="xdir"><button class="btn" data-d="out" aria-pressed="true">Leaving</button><button class="btn" data-d="in">Arriving</button></div></div>
+<div id="xcard"></div>
+<div class="xgrid">
+  <div class="xpanel"><h4 id="xbarsH">Top destinations</h4><div class="chart" id="xbars"></div></div>
+  <div class="xpanel"><h4 id="xlineH">Over time</h4><div class="chart" id="xline"></div></div>
+</div>
+<p class="src" id="xnote"></p>
+
+<h2><span class="n">03 · Empires and languages</span>The old routes still run</h2>
+<p>The strongest patterns on the map are older than any of the students in them. French-speaking Africa looks to France, Portuguese-speaking Africa to Portugal, Central Asia to Russia, and much of English-speaking Africa to Britain or South Africa. Each of these routes has held for the whole period, but most have loosened.</p>
+<div class="figure"><p class="fig-h">Share of each group's students abroad who study in the old centre</p><p class="fig-sub">Students counted abroad from each group of countries, share in one host; lines are unbroken where hosts are filled between reported years</p><div class="chart" id="cBlocs"></div></div>
+<p>In {{meta.first_year|raw}}, {{v.fra_franco_first|pct}} of students abroad from French-speaking sub-Saharan Africa were in France; by {{meta.last_year|raw}} it was {{v.fra_franco_last|pct}}, as Senegal, Morocco, Canada and Turkey took a growing share. Senegal itself is now the number one destination for {{v.sen_tops_last|int}} of its neighbours. The pull of Paris on Algeria, Morocco and Tunisia fell from {{v.fra_maghreb_first|pct}} to {{v.fra_maghreb_last|pct}}. Russia held its grip on Central Asia: {{v.rus_ca_last|pct}} of Central Asian students abroad were in Russia in {{meta.last_year|raw}}, and it is number one for all five countries. Portugal still takes {{v.prt_luso_last|pct}} of students from Angola, Mozambique, Cape Verde, Guinea-Bissau and São Tomé. (The dip in that line from 2008 is not real movement: Portugal changed how it counted, and its reported total fell from {{v.prt_in_2007|int}} in 2007 to {{v.prt_in_2008|int}} in 2008.) English-speaking Africa is the one group that moved towards its old centre: Britain's share rose from {{v.gbr_anglo_first|pct}} to {{v.gbr_anglo_last|pct}}, as Nigerians poured into British universities after 2020.</p>
+
+<h2><span class="n">04 · New magnets</span>Turkey, South Korea, Malaysia and the Gulf</h2>
+<div class="figure"><p class="fig-h">International students in some fast-growing hosts</p><p class="fig-sub">Inbound internationally mobile students (UNESCO totals, which exist even where the breakdown by origin does not)</p><div class="chart" id="cMagnets"></div></div>
+<p>Turkey is the biggest new magnet: {{magnets.TUR.v0|int}} international students in {{magnets.TUR.y0|raw}}, {{magnets.TUR.v1|int}} in {{magnets.TUR.y1|raw}}. Its students come from its neighbours and its language family: Syria ({{magnet_origins.TUR.top.0.1|int}}), Azerbaijan ({{magnet_origins.TUR.top.1.1|int}}), Iran ({{magnet_origins.TUR.top.2.1|int}}) and Turkmenistan ({{magnet_origins.TUR.top.3.1|int}}). Turkey is now the number one destination for Syria, Azerbaijan and Iran. South Korea grew {{magnets.KOR.x|f1}} times from {{magnets.KOR.y0|raw}}, mostly with students from China and Vietnam, and is number one for Mongolia. Malaysia grew {{magnets.MYS.x|f1}} times from {{magnets.MYS.y0|raw}}; {{v.mys_chn_share|pct}} of its international students came from China in {{magnet_origins.MYS.year|raw}}. Russia, already large, reached {{magnets.RUS.v1|int}}.</p>
+<p>Two of the largest magnets cannot be put on the main map. The United Arab Emirates reported {{magnets.ARE.v1|int}} international students in {{magnets.ARE.y1|raw}}, and China {{v.chn_inbound_last|int}}, but neither says where they come from. If the Emirates were counted it could be number one for some Gulf and Arab countries; I mark those countries as uncertain on the map. China's students come largely from its Asian neighbours and Africa, but the UNESCO data do not let me rank it.</p>
+<div class="pull">Vietnam's students now go to Japan before the United States, and Iran's go to Turkey.</div>
+
+<h2><span class="n">05 · India and China</span>The two giants of the student world</h2>
+<div class="figure"><p class="fig-h">Students abroad from China and India</p><p class="fig-sub">UNESCO estimate of each country's internationally mobile students studying abroad, all destinations</p><div class="chart" id="cIC"></div></div>
+<p>China has been the world's biggest sender throughout: {{v.chn_out_first|int}} students abroad in {{meta.first_year|raw}}, {{v.chn_out_last|int}} in {{meta.last_year|raw}}. India has grown faster, from {{v.ind_out_first|int}} to {{v.ind_out_last|int}}, and its numbers jumped after 2019 while China's flattened. On UNESCO's estimate India has not yet overtaken China worldwide. It has in Britain: in the UNESCO data the UK had more Indian than Chinese students in {{meta.last_year|raw}} ({{v.gbr_ind_last|int}} against {{v.gbr_chn_last|int}}), and HESA's own figures show the same switch in {{uk.india_over_china_first_year|raw}}. In the United States, China was still ahead in {{meta.last_year|raw}} ({{v.usa_chn_last|int}} against {{v.usa_ind_last|int}}) on these data.</p>
+
+<h2 class="bleed"><span class="n">06 · The UK by university</span>Where each university's students come from</h2>
+<div class="bleed">
+<p style="max-width:700px;margin-inline:auto">HESA publishes, for every UK university and college, its non-UK students by home country. Pick one to see its own map. Counts are rounded by HESA to the nearest five; the years are academic years from {{uk.first_year|raw}} to {{uk.last_year|raw}}.</p>
+<div class="controls" style="max-width:900px;margin-inline:auto"><div class="searchbox"><input type="search" id="uq" placeholder="Search a university, e.g. Edinburgh, Coventry, LSE" autocomplete="off" aria-label="Search a UK university" aria-autocomplete="list" aria-controls="usug"><ul class="suggest" id="usug" role="listbox"></ul></div><select id="uyear" aria-label="Academic year"></select><button class="btn" id="uall">All UK</button></div>
+<div style="max-width:1100px;margin-inline:auto">
+<div id="ucard"></div>
+<div class="chart" id="umap"></div>
+<div class="xgrid" style="margin-top:14px"><div class="xpanel"><h4>Top home countries</h4><div class="chart" id="ubars"></div></div><div class="xpanel"><h4>Over time, top five</h4><div class="chart" id="uline"></div></div></div>
+</div>
+</div>
+<p>Across the UK, students from India ({{uk.top_last.0.1|int}}) narrowly outnumbered those from China ({{uk.top_last.1.1|int}}) in {{uk.last_year|raw}}, ten years after India sent just {{uk.top_first.1.1|int}}. Nigeria rose to {{v.uk_nga_peak|int}} in {{v.uk_nga_peak_year|raw}} and fell back to {{v.uk_nga_last|int}} by {{uk.last_year|raw}}. Students from the European Union fell after Brexit: France, Italy and Germany all sent fewer in {{uk.last_year|raw}} than in {{uk.first_year|raw}}. Of the {{uk.providers_ge1000|int}} providers with at least 1,000 non-UK students in {{uk.last_year|raw}}, China is the biggest source for {{v.uk_prov_chn|int}} and India for {{v.uk_prov_ind|int}}.</p>
+
+<h2><span class="n">07 · Checking</span>How far to trust the map</h2>
+<p>Two independent checks agree well with the UNESCO table. The OECD publishes, for its members and partners, the share of each origin country's mobile students who study in each destination. Across {{checks.oecd_pairs|int}} matching host, origin and year combinations, the UNESCO-based share is within one percentage point of the OECD share {{checks.oecd_within_1pp|pct}} of the time (correlation {{checks.oecd_corr|raw}}); the larger differences come from the two sources using slightly different totals for the country of origin. For the UK, the UNESCO total for {{v.uk_check_year|raw}} ({{v.uk_check_uis|int}}) is within {{v.uk_check_diff|pct1}} of HESA's own count ({{v.uk_check_hesa|int}}).</p>
+<div class="note">
+<h3>Method and caveats</h3>
+<p><b>The table.</b> UNESCO Institute for Statistics (UIS) data, release {{meta.uis_version|raw}}, retrieved through the UIS data API on {{meta.uis_retrieved|raw}}: for each host country and year, inbound internationally mobile tertiary students by country of origin ({{v.n_origin_indicators|int}} origin indicators). "Internationally mobile" means students who crossed a border to study, usually defined by previous education or residence rather than citizenship. Years are UNESCO reference years (the academic year ending in that year).</p>
+<p><b>Gaps.</b> Many hosts skip years. A host-year counts as reported when its students by origin add up to at least 30% of its total; a missing year between two reported years at most nine years apart is filled by straight-line interpolation, and otherwise the nearest reported year within two years is carried over. Of the {{meta.filled_rows|int}} host, origin and year rows used, {{meta.filled_by_method.interpolated|int}} are interpolated and {{meta.filled_by_method.carried|int}} carried. The United States is filled between {{meta.first_year|raw}} and 2005 and between 2005 and 2013. Nothing else is estimated.</p>
+<p><b>Uncertain countries.</b> Some hosts report a total but not the origins, or stop reporting for long spells (Germany before {{v.deu_first_year|raw}}, Japan from 2000 to 2012, Argentina from 2001 to 2015, the United Arab Emirates after 2012). For each such host and year I take its nearest reported breakdown, scaled by the change in its total where known, and if that could reach 70% of the counted number one, the country is drawn with a dashed outline and named as uncertain. That flags {{v.unc_last|int}} countries in {{meta.last_year|raw}} and {{v.unc_first|int}} in {{meta.first_year|raw}}. China, Singapore and Lebanon never report origins and cannot be tested this way.</p>
+<p><b>Japan</b> reports only part of its students by origin from 2015 (not those from China or South Korea), so its counts are a lower bound. Countries with fewer than 50 students counted abroad are left grey. Small countries' answers can swing on a handful of students.</p>
+</div>
+
+<div class="cta"><a class="p" href="https://doi.org/10.5281/zenodo.23748258">Read the paper</a><a href="https://github.com/Tristan-Hotham/study-abroad">Data and code</a><a href="https://blog.tristanhotham.com/2026/10/28/study-abroad/">Blog post</a></div>
+
+<details><summary>Sources and licences</summary>
+<p class="src">International student mobility: UNESCO Institute for Statistics (UIS), UIS Data API (https://api.uis.unesco.org), release {{meta.uis_version|raw}}, extracted {{meta.uis_retrieved|raw}}; licensed CC BY-SA 4.0. Check: OECD Education at a Glance database, Data Explorer (sdmx.oecd.org), share of mobile students by destination, extracted {{meta.oecd_retrieved|raw}}; CC BY 4.0. UK providers: HESA Open data, Table 28, Non-UK permanent address students by HE provider and country of permanent address, 2014/15 to 2024/25 (https://www.hesa.ac.uk/data-and-analysis/students/table-28), extracted {{meta.hesa_retrieved|raw}}; CC BY 4.0; country names from ONS (OGL v3). University locations: Wikidata (CC0). Country outlines: Natural Earth 1:50m (public domain). Place names: GeoNames cities15000 (CC BY 4.0). Hill shading: AWS Terrain Tiles (Mapzen terrarium). Optional base maps: Tiles © Esri.</p>
+</details>
+
+<footer>
+  <p>Dr Tristan Hotham, Independent researcher. ORCID 0000-0003-4931-9349. Cite as: Hotham, T. (2026) Where would you go to university? International student mobility by country of origin, {{meta.first_year|raw}} to {{meta.last_year|raw}}. https://doi.org/10.5281/zenodo.23748258</p>
+  <p>I wrote the text, with drafting and editing assistance from Claude (Anthropic), which also helped prepare the analysis code. I reviewed and checked all text and results.</p>
+  <p>Text, figures and derived data: CC BY-SA 4.0 (because the UNESCO data are CC BY-SA 4.0). Code: MIT. Other studies: <a href="https://maps.tristanhotham.com/games-on-the-map/">Games on the map</a>, <a href="https://maps.tristanhotham.com/country-names/">Country names</a>, <a href="https://blog.tristanhotham.com/">all posts</a>.</p>
+</footer>
+</div>
+<div class="tip" id="tip"></div>
+<button class="btn theme" id="theme" aria-label="Toggle dark mode">◐</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+"use strict";
+const R = /*RESULTS*/;
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = n => Math.round(n).toLocaleString("en-GB");
+const pct = x => Math.round(x * 100) + "%";
+const isDark = () => document.documentElement.dataset.theme === "dark" || (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+const tip = $("tip");
+function showTip(h, x, y) { tip.innerHTML = h; tip.style.display = "block"; const w = tip.offsetWidth; x = Math.max(w / 2 + 8, Math.min(innerWidth - w / 2 - 8, x)); tip.style.left = x + scrollX + "px"; tip.style.top = y + scrollY + "px"; }
+function hideTip() { tip.style.display = "none"; }
+const redraws = [];
+function resp(box, render) { let last = 0; const go = force => { const w = Math.max(280, Math.round(box.clientWidth)); if (!force && Math.abs(w - last) < 4) return; last = w; box.innerHTML = ""; render(w, w < 560); }; new ResizeObserver(() => go()).observe(box); go(); redraws.push(() => go(true)); }
+const SVGNS = "http://www.w3.org/2000/svg";
+function svg(w, h) { const s = document.createElementNS(SVGNS, "svg"); s.setAttribute("viewBox", `0 0 ${w} ${h}`); s.setAttribute("role", "img"); return s; }
+function el(p, tag, a, txt) { const e = document.createElementNS(SVGNS, tag); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; p.appendChild(e); return e; }
+(function () { const k = "sa_theme"; let t = null; try { t = localStorage.getItem(k); } catch (e) {} if (t) document.documentElement.dataset.theme = t;
+  $("theme").onclick = () => { const d = isDark() ? "light" : "dark"; document.documentElement.dataset.theme = d; try { localStorage.setItem(k, d); } catch (e) {} redraws.forEach(f => f()); if (window.mapRestyle) mapRestyle(); }; })();
+
+let D = null, CJ = null, TOWNS = null, lmap = null;
+const S = { year: R.meta.last_year, sel: -1, hi: -1, dir: "out", uprov: -1, uyear: null, arcs: false };
+const MUTED = ["#B9AC9C", "#A3B5AA", "#B7A9C3", "#C7B59A", "#A9B5C8", "#C3A7A2", "#ABB79B", "#B5B0A2"];
+const MUTED_D = ["#6E655B", "#5D6B63", "#6B6175", "#77694F", "#5E6878", "#765D59", "#626D52", "#6A665C"];
+function hostCol(h) { if (h < 0) return css("--nodata"); const m = isDark() ? D.colDark : D.col; return m[h] || (isDark() ? MUTED_D : MUTED)[h % 8]; }
+const NM = i => i >= 0 ? D.names[i] : "";
+const IDX = {};
+function topOf(o, y) { const t = D.top[y]; return t ? t[o] : null; }
+function flowsYear(y) { if (!flowsYear.c[y]) { const a = D.flows[y] || [], out = new Map(), inn = new Map(); for (let k = 0; k < a.length; k += 3) { const h = a[k], o = a[k + 1], v = a[k + 2]; if (!out.has(o)) out.set(o, []); out.get(o).push([h, v]); if (!inn.has(h)) inn.set(h, []); inn.get(h).push([o, v]); } for (const m of [out, inn]) for (const v of m.values()) v.sort((p, q) => q[1] - p[1]); flowsYear.c[y] = { out, inn }; } return flowsYear.c[y]; }
+flowsYear.c = {};
+const METH = ["reported", "filled between reported years", "carried from the nearest reported year"];
+
+/* ===== small chart helpers ===== */
+function lineChart(box, series, opt = {}) {
+  resp(box, (W, narrow) => {
+    const H = opt.h || (narrow ? 260 : 300), L = opt.left || 52, Rr = narrow ? 92 : 128, T = 12, B = 26;
+    const xs = series.flatMap(s => s.pts.map(p => p[0])), ys = series.flatMap(s => s.pts.map(p => p[1]));
+    if (!xs.length) { box.innerHTML = '<p class="src">No data.</p>'; return; }
+    const x0 = opt.x0 || Math.min(...xs), x1 = opt.x1 || Math.max(...xs), y1 = opt.ymax || Math.max(...ys) * 1.05 || 1;
+    const X = x => L + (W - L - Rr) * (x - x0) / Math.max(1, x1 - x0), Y = y => T + (H - T - B) * (1 - y / y1);
+    const s = svg(W, H);
+    const ticks = opt.pct ? [0, .25, .5, .75, 1].filter(t => t <= y1 + 1e-9) : niceTicks(y1);
+    for (const t of ticks) { el(s, "line", { x1: L, x2: W - Rr, y1: Y(t), y2: Y(t), stroke: css("--rule") }); el(s, "text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end", class: "lab s m" }, opt.pct ? Math.round(t * 100) + "%" : short(t)); }
+    const step = (x1 - x0) > 12 ? 5 : (x1 - x0) > 6 ? 2 : 1;
+    for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) el(s, "text", { x: X(x), y: H - 6, "text-anchor": "middle", class: "lab s m" }, opt.xlab ? opt.xlab(x) : x);
+    const labs = [];
+    for (const se of series) {
+      const d = se.pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join("");
+      el(s, "path", { d, fill: "none", stroke: se.col, "stroke-width": se.w || 2.5, "stroke-linejoin": "round", "stroke-linecap": "round" });
+      for (const p of se.pts) if (p[2]) el(s, "circle", { cx: X(p[0]), cy: Y(p[1]), r: 2.6, fill: css("--card"), stroke: se.col, "stroke-width": 1.2 });
+      const lp = se.pts[se.pts.length - 1]; if (lp) labs.push({ y: Y(lp[1]), x: X(lp[0]), t: se.name, c: se.col, v: lp[1] });
+    }
+    labs.sort((a, b) => a.y - b.y); for (let i = 1; i < labs.length; i++) if (labs[i].y - labs[i - 1].y < 13) labs[i].y = labs[i - 1].y + 13;
+    for (const l of labs) el(s, "text", { x: l.x + 6, y: l.y + 4, class: "lab b", fill: l.c, style: `fill:${l.c}` }, (narrow && l.t.length > 12 ? l.t.slice(0, 11) + "." : l.t));
+    const hov = el(s, "rect", { x: L, y: T, width: W - L - Rr, height: H - T - B, fill: "transparent" });
+    hov.addEventListener("mousemove", e => { const r = s.getBoundingClientRect(), xv = Math.round(x0 + (x1 - x0) * ((e.clientX - r.left) * W / r.width - L) / (W - L - Rr)); const rows = series.map(se => { const p = se.pts.find(q => q[0] === xv); return p ? `<span style="color:${se.col}">■</span> ${esc(se.name)}: ${opt.pct ? pct(p[1]) : fmt(p[1])}${p[2] ? " (filled)" : ""}` : null; }).filter(Boolean); if (rows.length) showTip(`<b>${opt.xlab ? opt.xlab(xv) : xv}</b><br>${rows.join("<br>")}`, e.pageX - scrollX, e.pageY - scrollY); });
+    hov.addEventListener("mouseleave", hideTip);
+    box.appendChild(s);
+  });
+}
+function niceTicks(m) { const p = Math.pow(10, Math.floor(Math.log10(m))), n = m / p, st = (n > 5 ? 2 : n > 2 ? 1 : .5) * p; const t = []; for (let v = 0; v <= m; v += st) t.push(v); return t; }
+function short(v) { return v >= 1e6 ? (v / 1e6).toFixed(v % 1e6 ? 1 : 0) + "m" : v >= 1e3 ? Math.round(v / 1e3) + "k" : String(Math.round(v)); }
+function hbars(box, rows, opt = {}) {
+  resp(box, (W, narrow) => {
+    const lw = narrow ? 118 : 150, rh = 23, H = rows.length * rh + 6, max = Math.max(1, ...rows.map(r => r[1]));
+    const s = svg(W, H);
+    rows.forEach((r, i) => {
+      const y = i * rh + 3, w = Math.max(1, (W - lw - 66) * r[1] / max);
+      el(s, "text", { x: lw - 6, y: y + 14, "text-anchor": "end", class: "lab" }, r[0].length > (narrow ? 15 : 20) ? r[0].slice(0, narrow ? 14 : 19) + "." : r[0]);
+      el(s, "rect", { x: lw, y: y + 2, width: w, height: rh - 7, fill: r[2] || css("--accent"), rx: 2 });
+      el(s, "text", { x: lw + w + 5, y: y + 14, class: "lab m" }, fmt(r[1]) + (r[3] != null ? "  " + r[3] : ""));
+    });
+    box.appendChild(s);
+  });
+}
+
+/* ===== map ===== */
+const LY = { base: "plain", hills: true, hillK: 50, names: false, nameLvl: 0, lines: true, lineK: 45, colour: 90 };
+const LYDEF = { ...LY };
+try { Object.assign(LY, JSON.parse(localStorage.getItem("sa_layers") || "{}")); } catch (e) {}
+const saveLY = () => { try { localStorage.setItem("sa_layers", JSON.stringify(LY)); } catch (e) {} };
+let tiles = {}, landL = null, borderL = null, hillL = null, hillCv = null, HILLIMG = null, dotL = null, arcL = null, nameL = null, renderer = null;
+const WORLD = window.L ? L.latLngBounds([-85.0511, -180], [85.0511, 180]) : null;
+const CanvasOverlay = window.L ? L.ImageOverlay.extend({ _initImage() { const c = this._image = this._url; L.DomUtil.addClass(c, "leaflet-image-layer"); if (this._zoomAnimated) L.DomUtil.addClass(c, "leaflet-zoom-animated"); c.onselectstart = L.Util.falseFn; c.onmousemove = L.Util.falseFn; } }) : null;
+function styleCountries() {
+  if (!landL) return;
+  const plain = LY.base === "plain", land = css("--land"), k = LY.colour / 100, y = String(S.year);
+  landL.eachLayer(l => {
+    const i = l.feature.properties.i, t = i >= 0 ? topOf(i, y) : null;
+    if (!t) { l.setStyle({ stroke: false, fillColor: plain ? css("--nodata") : land, fillOpacity: plain ? .9 : .25 }); return; }
+    const share = t[1] / 1000, op = (.5 + .5 * Math.min(1, share / .6)) * k, dim = S.hi >= 0 && t[0] !== S.hi;
+    l.setStyle({ fillColor: hostCol(t[0]), fillOpacity: dim ? op * .18 : (plain ? op : op * .85), stroke: !!t[2] || i === S.sel, color: i === S.sel ? css("--fg") : css("--fg"), weight: i === S.sel ? 2.4 : 1.1, dashArray: i === S.sel ? null : "3 3", opacity: dim ? .2 : .85 });
+  });
+}
+function drawDots() {
+  dotL.clearLayers();
+  const y = String(S.year), t = D.top[y] || {}, cnt = new Map();
+  for (const o in t) cnt.set(t[o][0], (cnt.get(t[o][0]) || 0) + 1);
+  const arr = [...cnt].sort((a, b) => b[1] - a[1]); const max = arr.length ? arr[0][1] : 1;
+  arr.forEach(([h, n], rank) => {
+    const c = D.cent[h]; if (!c) return;
+    const r = 5 + 17 * Math.sqrt(n / max);
+    const m = L.circleMarker([c[1], c[0]], { renderer, radius: r, color: isDark() ? "#000" : "#fff", weight: 2, fillColor: hostCol(h), fillOpacity: S.hi >= 0 && S.hi !== h ? .25 : .95 });
+    m.bindTooltip(`<b>${esc(NM(h))}</b><br>number one for ${n} countr${n > 1 ? "ies" : "y"} in ${y}`, { direction: "top", offset: [0, -r] });
+    m.on("click", () => { S.hi = S.hi === h ? -1 : h; refresh(); });
+    m.addTo(dotL);
+    if (n >= 3) L.marker([c[1], c[0]], { interactive: false, keyboard: false, icon: L.divIcon({ className: "hostlab", html: String(n), iconSize: [30, 14], iconAnchor: [15, 7] }) }).addTo(dotL);
+  });
+  return arr;
+}
+function arc(a, b, k = .2) {
+  let [y1, x1] = a, [y2, x2] = b, shift = 0; if (Math.abs(x2 - x1) > 180) { shift = x2 < x1 ? 360 : -360; x2 += shift; }
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1, cx = mx - dy * k, cy = Math.max(-80, Math.min(80, my + dx * k)), out = [];
+  for (let t = 0; t <= 1.0001; t += 1 / 32) { const u = 1 - t; out.push([u * u * y1 + 2 * u * t * cy + t * t * y2, u * u * x1 + 2 * u * t * cx + t * t * x2]); }
+  return shift ? [out, out.map(([y, x]) => [y, x - shift])] : [out];
+}
+function drawArcs() {
+  arcL.clearLayers(); if (S.sel < 0 || !S.arcs) return;
+  const y = String(S.year), F = flowsYear(y), list = (S.dir === "out" ? F.out.get(S.sel) : F.inn.get(S.sel)) || [], c0 = D.cent[S.sel]; if (!c0) return;
+  const top = list.slice(0, 10), max = top.length ? top[0][1] : 1;
+  for (const [j, v] of top.slice().reverse()) {
+    const c1 = D.cent[j]; if (!c1) continue;
+    const a = S.dir === "out" ? [c0[1], c0[0]] : [c1[1], c1[0]], b = S.dir === "out" ? [c1[1], c1[0]] : [c0[1], c0[0]];
+    const col = S.dir === "out" ? hostCol(j) : hostCol(S.sel);
+    const ln = L.polyline(arc(a, b), { renderer, color: col, weight: 1 + 7 * Math.sqrt(v / max), opacity: .85, lineCap: "round", interactive: true });
+    ln.bindTooltip(`<b>${esc(NM(S.dir === "out" ? S.sel : j))} to ${esc(NM(S.dir === "out" ? j : S.sel))}</b><br>${fmt(v)} students, ${y}`, { sticky: true });
+    ln.addTo(arcL);
+  }
+}
+function keys(arr) {
+  const y = String(S.year);
+  $("keys").innerHTML = arr.map(([h, n]) => `<button class="key" data-h="${h}" aria-pressed="${S.hi === h}"><i style="background:${hostCol(h)}"></i>${esc(NM(h))}<b>${n}</b></button>`).join("") || '<p class="src">No data this year.</p>';
+  $("keys").querySelectorAll(".key").forEach(b => b.onclick = () => { const h = +b.dataset.h; S.hi = S.hi === h ? -1 : h; refresh(); });
+  const cy = R.coverage_by_year.find(d => d.year === +y), unc = R.uncertain_by_year[y] || 0;
+  const miss = cy ? cy.biggest_missing.filter(m => m[1] >= 20000).map(m => `${NM(D.codes.indexOf(m[0]))} (${fmt(m[1])})`) : [];
+  $("mapNote").textContent = `${y}: ${cy ? fmt(cy.students_counted) : ""} students counted abroad in ${cy ? cy.hosts : ""} host countries with origin data. ${miss.length ? "Large hosts with a total but no origins this year: " + miss.join(", ") + ". " : ""}${unc} countries are drawn with a dashed outline because a host without origin data could plausibly be their number one. Grey: fewer than 50 students counted abroad, or no data. Scroll to zoom after clicking the map.`;
+}
+function cardFor(i) {
+  const y = String(S.year), t = topOf(i, y);
+  $("cardH").textContent = NM(i);
+  if (!t) { $("card").innerHTML = `<p class="sub">No students from ${esc(NM(i))} are counted abroad in ${y}.</p>`; return; }
+  const u = D.unc[i + "_" + y];
+  const unc = u ? `<p class="warn">Uncertain: ${u.split(";").map(s => { const [c, v] = s.split(":"); return `${esc(NM(D.codes.indexOf(c)))} has no origin data this year but could hold about ${fmt(+v)}`; }).join("; ")}.</p>` : "";
+  $("card").innerHTML = `<div class="big" style="color:${hostCol(t[0])}">${esc(NM(t[0]))}</div><p class="sub">${pct(t[1] / 1000)} of the ${fmt(t[3])} students from ${esc(NM(i))} counted abroad in ${y} (${fmt(t[5])})${t[4] >= 0 ? `; next: ${esc(NM(t[4]))}` : ""}.</p>${unc}<button class="btn" id="toX">Open in the explorer</button>`;
+  $("toX").onclick = () => { selectCountry(i); document.getElementById("xq").scrollIntoView({ behavior: "smooth", block: "center" }); };
+}
+function refresh() { styleCountries(); const arr = drawDots(); keys(arr); drawArcs(); if (S.sel >= 0) { cardFor(S.sel); explorer(); } }
+
+function composeHills() {
+  if (!HILLIMG) return;
+  const k = LY.hillK / 100, dark = isDark() || LY.base === "dark", n = HILLIMG.width;
+  const g = hillCv.getContext("2d"), out = g.createImageData(n, n), s = HILLIMG.data, d = out.data;
+  const sh = dark ? [0, 0, 0] : [40, 40, 52];
+  for (let i = 0; i < s.length; i += 4) {
+    const a = s[i] / 255, h = s[i + 1] / 255;
+    if (a >= h * .6) { d[i] = sh[0]; d[i + 1] = sh[1]; d[i + 2] = sh[2]; d[i + 3] = Math.min(255, a * 255 * k * (dark ? 1.1 : .9)); }
+    else { d[i] = 255; d[i + 1] = 255; d[i + 2] = 255; d[i + 3] = h * 255 * k * (dark ? .25 : .6); }
+  }
+  g.putImageData(out, 0, 0);
+}
+function loadHills() {
+  if (HILLIMG) return Promise.resolve();
+  return new Promise((ok, bad) => { const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(im, 0, 0); HILLIMG = x.getImageData(0, 0, c.width, c.height); hillCv.width = c.width; hillCv.height = c.height; ok(); }; im.onerror = bad; im.src = "data/hills.png"; });
+}
+function placeNames() {
+  if (!nameL) return; nameL.clearLayers(); if (!LY.names || !TOWNS) return;
+  const z = lmap.getZoom(), bb = lmap.getBounds().pad(.05), lvl = LY.nameLvl;
+  const minR = lvl === 0 ? (z >= 5 ? 2 : 3) : lvl === 1 ? (z >= 6 ? 0 : z >= 5 ? 1 : z >= 4 ? 2 : 3) : (z >= 4 ? 0 : z >= 3 ? 1 : 2);
+  const boxes = [], cap = lvl === 2 ? 420 : 260; let n = 0;
+  for (const t of TOWNS) {
+    if (t[3] < minR || !bb.contains([t[2], t[1]])) continue;
+    const p = lmap.latLngToContainerPoint([t[2], t[1]]), fs = t[3] >= 3 ? 12 : 11;
+    const bx = [p.x - 4, p.y - 8, p.x + 10 + t[0].length * fs * .6, p.y + 7];
+    if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+    boxes.push(bx);
+    L.marker([t[2], t[1]], { pane: "names", interactive: false, keyboard: false, icon: L.divIcon({ className: "town r" + t[3], html: `<i></i>${esc(t[0])}`, iconSize: null, iconAnchor: [3, 6] }) }).addTo(nameL);
+    if (++n >= cap) break;
+  }
+}
+function applyLayers() {
+  for (const k in tiles) { if (k === LY.base) tiles[k].addTo(lmap); else tiles[k].remove(); }
+  lmap.getContainer().classList.toggle("sat", LY.base === "satellite");
+  lmap.getContainer().style.background = LY.base === "plain" ? css("--sea") : (LY.base === "dark" ? "#2b2b2b" : LY.base === "satellite" ? "#0b1a26" : "#e8e8e8");
+  styleCountries();
+  if (LY.hills) { loadHills().then(() => { composeHills(); hillL.addTo(lmap); }).catch(() => {}); } else hillL.remove();
+  if (LY.lines) { borderL.addTo(lmap); borderL.setStyle({ color: LY.base === "satellite" || LY.base === "dark" || isDark() ? "#f2eee6" : css("--line"), opacity: .15 + .85 * LY.lineK / 100, weight: .4 + LY.lineK / 100 }); } else borderL.remove();
+  if (LY.names) nameL.addTo(lmap); else nameL.remove();
+  placeNames();
+}
+function initLayers() {
+  const Ctl = L.Control.extend({ options: { position: "topright" }, onAdd() {
+    const d = L.DomUtil.create("div"); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+    d.innerHTML = `<button class="lyrBtn" aria-expanded="false" aria-controls="lyrPanel">Map layers</button>
+<div class="lyrPanel" id="lyrPanel" hidden>
+ <div class="row"><label for="lyBase" style="font-weight:600">Base map</label><div class="sub"><select id="lyBase" aria-label="Base map"><option value="plain">Plain paper (offline)</option><option value="light">Light grey (Esri)</option><option value="dark">Dark grey (Esri)</option><option value="satellite">Satellite (Esri)</option></select></div></div>
+ <div class="row"><label><input type="checkbox" id="lyHills"> Hills and mountains</label><div class="sub"><span>strength</span><input type="range" id="lyHillK" min="10" max="100" step="5" aria-label="Hill shading strength"></div></div>
+ <div class="row"><label><input type="checkbox" id="lyNames"> Place names</label><div class="sub"><span>how many</span><select id="lyNameLvl" aria-label="How many place names"><option value="0">Big cities only</option><option value="1">Cities and towns</option><option value="2">Lots</option></select></div></div>
+ <div class="row"><label><input type="checkbox" id="lyLines"> Borders and coasts</label><div class="sub"><span>strength</span><input type="range" id="lyLineK" min="10" max="100" step="5" aria-label="Border line strength"></div></div>
+ <div class="row"><label style="font-weight:600">Colour</label><div class="sub"><span>strength</span><input type="range" id="lyColour" min="20" max="100" step="5" aria-label="Colour strength"></div></div>
+ <button class="reset" id="lyReset">Reset layers</button>
+</div>`;
+    return d; } });
+  lmap.addControl(new Ctl());
+  const q = $, btn = lmap.getContainer().querySelector(".lyrBtn"), pan = q("lyrPanel");
+  btn.onclick = () => { const o = pan.hidden; pan.hidden = !o; btn.setAttribute("aria-expanded", o); };
+  const sync = () => { q("lyBase").value = LY.base; q("lyHills").checked = LY.hills; q("lyHillK").value = LY.hillK; q("lyNames").checked = LY.names; q("lyNameLvl").value = LY.nameLvl; q("lyLines").checked = LY.lines; q("lyLineK").value = LY.lineK; q("lyColour").value = LY.colour; };
+  const on = (id, ev, f) => q(id).addEventListener(ev, e => { f(e.target); saveLY(); applyLayers(); drawDots(); });
+  on("lyBase", "change", t => { LY.base = t.value; if (t.value === "satellite") { LY.hills = false; q("lyHills").checked = false; } });
+  on("lyHills", "change", t => LY.hills = t.checked); on("lyHillK", "input", t => { LY.hillK = +t.value; LY.hills = true; q("lyHills").checked = true; });
+  on("lyNames", "change", t => LY.names = t.checked); on("lyNameLvl", "change", t => { LY.nameLvl = +t.value; LY.names = true; q("lyNames").checked = true; });
+  on("lyLines", "change", t => LY.lines = t.checked); on("lyLineK", "input", t => { LY.lineK = +t.value; LY.lines = true; q("lyLines").checked = true; });
+  on("lyColour", "input", t => LY.colour = +t.value);
+  q("lyReset").onclick = () => { Object.assign(LY, LYDEF); saveLY(); sync(); applyLayers(); };
+  sync();
+  lmap.on("zoomend moveend", placeNames);
+}
+window.mapRestyle = () => { if (!lmap) return; applyLayers(); refresh(); };
+
+/* ===== time ===== */
+let playT = null;
+function setYear(y) { S.year = y; $("year").value = y; $("yearBig").textContent = y; refresh(); }
+function play() {
+  if (playT) { clearInterval(playT); playT = null; $("play").textContent = "▶ Play"; return; }
+  if (S.year >= R.meta.last_year) setYear(R.meta.first_year);
+  $("play").textContent = "❚❚ Pause";
+  playT = setInterval(() => { if (S.year >= R.meta.last_year) { play(); return; } setYear(S.year + 1); }, 750);
+}
+
+/* ===== search ===== */
+function suggest(inp, list, items, pick) {
+  let cur = -1, res = [];
+  const draw = () => { list.innerHTML = res.map((r, i) => `<li role="option" aria-selected="${i === cur}" data-i="${i}">${esc(r[0])}${r[2] ? ` <span>${esc(r[2])}</span>` : ""}</li>`).join(""); list.style.display = res.length ? "block" : "none"; list.querySelectorAll("li").forEach(li => li.onmousedown = e => { e.preventDefault(); go(+li.dataset.i); }); };
+  const go = i => { const r = res[i]; if (!r) return; inp.value = r[0]; list.style.display = "none"; pick(r[1]); };
+  inp.addEventListener("input", () => { const q = inp.value.trim().toLowerCase(); cur = -1; res = q ? items().filter(r => r[0].toLowerCase().includes(q)).sort((a, b) => (a[0].toLowerCase().startsWith(q) ? 0 : 1) - (b[0].toLowerCase().startsWith(q) ? 0 : 1) || (b[3] || 0) - (a[3] || 0)).slice(0, 12) : []; draw(); });
+  inp.addEventListener("keydown", e => { if (e.key === "ArrowDown") { cur = Math.min(res.length - 1, cur + 1); draw(); e.preventDefault(); } else if (e.key === "ArrowUp") { cur = Math.max(0, cur - 1); draw(); e.preventDefault(); } else if (e.key === "Enter") { go(cur < 0 ? 0 : cur); } else if (e.key === "Escape") { list.style.display = "none"; } });
+  inp.addEventListener("blur", () => setTimeout(() => list.style.display = "none", 150));
+}
+const countryItems = () => D.names.map((n, i) => [n, i, "", (D.outbound[i] && D.outbound[i][String(R.meta.last_year)]) || 0]).filter(r => D.top[String(R.meta.last_year)][r[1]] || D.inbound[r[1]]);
+
+/* ===== explorer ===== */
+function selectCountry(i, fly) {
+  S.sel = i; S.arcs = true; $("xq").value = NM(i);
+  if (fly && lmap && D.cent[i]) lmap.flyTo([D.cent[i][1], D.cent[i][0]], Math.max(lmap.getZoom(), 3), { duration: .6 });
+  refresh();
+}
+function explorer() {
+  const i = S.sel; if (i < 0) return;
+  const y = String(S.year), F = flowsYear(y), out = S.dir === "out";
+  const list = (out ? F.out.get(i) : F.inn.get(i)) || [];
+  const tot = list.reduce((a, b) => a + b[1], 0);
+  const ob = D.outbound[i] && D.outbound[i][y], ib = D.inbound[i] && D.inbound[i][y];
+  const m = D.meth[i] && D.meth[i][y];
+  $("xcard").innerHTML = `<div class="big">${esc(NM(i))}, ${y}</div><p class="src">${out ? `${fmt(tot)} students from ${esc(NM(i))} counted in host countries with origin data${ob ? ` (UNESCO estimates ${fmt(ob)} abroad in all)` : ""}.` : (list.length ? `${fmt(tot)} international students in ${esc(NM(i))} by country of origin${m != null ? ", " + METH[m] : ""}${ib ? ` (total reported: ${fmt(ib)})` : ""}.` : `${esc(NM(i))} does not report its international students by origin for ${y}${ib ? `; its total is ${fmt(ib)}` : ""}.`)}</p>`;
+  $("xbarsH").textContent = out ? "Top destinations" : "Top countries of origin";
+  hbars($("xbars"), list.slice(0, 12).map(([j, v]) => [NM(j), v, out ? hostCol(j) : css("--accent"), tot ? pct(v / tot) : null]));
+  // over time: top five partners in the selected year (or overall)
+  const partners = list.slice(0, 5).map(r => r[0]);
+  const series = partners.map((j, k) => {
+    const pts = [];
+    for (let yy = R.meta.first_year; yy <= R.meta.last_year; yy++) {
+      const FF = flowsYear(String(yy)), l = (out ? FF.out.get(i) : FF.inn.get(i)) || [], r = l.find(q => q[0] === j);
+      const host = out ? j : i, mm = D.meth[host] && D.meth[host][yy];
+      if (r) pts.push([yy, r[1], mm > 0]);
+    }
+    return { name: NM(j), col: out ? hostCol(j) : ["#2349C9", "#D62839", "#F2A900", "#1B7F4C", "#7A3DB8"][k], pts };
+  });
+  $("xlineH").textContent = out ? "Students in each of today's top five destinations" : "Students from each of today's top five origins";
+  lineChart($("xline"), series, { h: 280 });
+  $("xnote").textContent = out ? "Counts in each destination as reported by that destination. Hollow points are filled years." : "Counts as reported by this country. Hollow points are filled years.";
+}
+
+/* ===== stories ===== */
+function storyCharts() {
+  const B = R.blocs, yrs = []; for (let y = R.meta.first_year; y <= R.meta.last_year; y++) yrs.push(String(y));
+  const bl = [["francophone_africa", "FRA", "French-official Africa to France", "#7A3DB8"], ["maghreb", "FRA", "Maghreb to France", "#B07CF0"], ["central_asia", "RUS", "Central Asia to Russia", "#1B7F4C"], ["lusophone", "PRT", "Lusophone Africa to Portugal", "#0EA5A0"], ["anglophone_africa", "GBR", "English-official Africa to UK", "#D62839"]];
+  lineChart($("cBlocs"), bl.map(([k, h, n, c]) => ({ name: n.split(" to ")[0], col: c, pts: yrs.filter(y => B[k].by_year[y]).map(y => [+y, B[k].by_year[y].share[h] || 0]) })), { pct: true, ymax: 1 });
+  const mg = [["TUR", "#8C1C13"], ["RUS", "#1B7F4C"], ["ARE", "#5E7C8A"], ["CHN", "#C9A227"], ["KOR", "#2349C9"], ["MYS", "#B5651D"], ["SAU", "#8DB33A"]];
+  lineChart($("cMagnets"), mg.map(([c, col]) => ({ name: ({ TUR: "Turkey", RUS: "Russia", ARE: "UAE", CHN: "China", KOR: "South Korea", MYS: "Malaysia", SAU: "Saudi Arabia" })[c], col, pts: Object.entries(R.inbound[c]).map(([y, v]) => [+y, v]).filter(p => p[0] >= 1999 && p[0] <= R.meta.last_year).sort((a, b) => a[0] - b[0]) })));
+  lineChart($("cIC"), [["CHN", "China", "#C9A227"], ["IND", "India", "#F26419"]].map(([c, n, col]) => ({ name: n, col, pts: Object.entries(R.outbound[c]).map(([y, v]) => [+y, v]).filter(p => p[0] >= 1999 && p[0] <= R.meta.last_year).sort((a, b) => a[0] - b[0]) })));
+}
+
+/* ===== UK ===== */
+let WORLDP = null;
+function ukData() {
+  const U = D.uk, y = String(S.uyear), arr = S.uprov < 0 ? U.total[y] : (U.data[S.uprov] || {})[y];
+  const rows = []; if (arr) for (let k = 0; k < arr.length; k += 2) rows.push([arr[k], arr[k + 1]]);
+  rows.sort((a, b) => b[1] - a[1]); return rows;
+}
+function ukMap(box, rows) {
+  resp(box, (W, narrow) => {
+    const H = Math.round(W * .44), s = svg(W, H), U = D.uk;
+    const byIso = new Map(); rows.forEach(([c, v]) => { const i = U.iso[c]; if (i >= 0) byIso.set(i, (byIso.get(i) || 0) + v); });
+    const max = Math.max(1, ...byIso.values());
+    const X = x => (x + 170) / 360 * W, Y = y => (84 - y) / 142 * H;
+    const dark = isDark(), lo = dark ? [45, 52, 80] : [222, 228, 245], hi = dark ? [120, 160, 255] : [22, 52, 170];
+    for (const f of CJ.features) {
+      const i = f.properties.i, v = byIso.get(i) || 0;
+      const t = v ? Math.log1p(v) / Math.log1p(max) : 0;
+      const col = v ? `rgb(${lo.map((a, k) => Math.round(a + (hi[k] - a) * t)).join(",")})` : css("--nodata");
+      const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+      const d = polys.map(p => p.map(r => r.map((q, k) => (k ? "L" : "M") + X(q[0]).toFixed(1) + " " + Y(Math.max(-56, q[1])).toFixed(1)).join("") + "Z").join("")).join("");
+      const p = el(s, "path", { d, fill: col, stroke: css("--card"), "stroke-width": .4 });
+      if (f.properties.iso === "GBR") p.setAttribute("fill", css("--accent2"));
+      p.addEventListener("mousemove", e => showTip(`<b>${esc(f.properties.n)}</b><br>${f.properties.iso === "GBR" ? "the UK" : fmt(v) + " students"}`, e.pageX - scrollX, e.pageY - scrollY));
+      p.addEventListener("mouseleave", hideTip);
+    }
+    box.appendChild(s);
+  });
+}
+function ukDraw() {
+  const U = D.uk, rows = ukData(), tot = rows.reduce((a, b) => a + b[1], 0), y = S.uyear;
+  const name = S.uprov < 0 ? "All UK universities and colleges" : U.providers[S.uprov][0];
+  $("ucard").innerHTML = `<div class="big" style="font:800 24px/1.12 var(--display)">${esc(name)}</div><p class="src">${fmt(tot)} non-UK students in ${y - 1}/${String(y).slice(2)} from ${rows.filter(r => r[1] > 0).length} countries${rows[0] ? `; biggest: ${esc(U.countries[rows[0][0]])} (${pct(rows[0][1] / tot)})` : ""}. Red: the UK.</p>`;
+  ukMap($("umap"), rows);
+  hbars($("ubars"), rows.slice(0, 15).map(([c, v]) => [U.countries[c].replace(/ \(Special Administrative Region of China\)/, "").replace(/ \(European Union\)/, ""), v, css("--accent"), pct(v / tot)]));
+  const top5 = rows.slice(0, 5).map(r => r[0]), cols = ["#2349C9", "#D62839", "#F2A900", "#1B7F4C", "#7A3DB8"];
+  lineChart($("uline"), top5.map((c, k) => ({ name: U.countries[c].replace(/ \(.*\)/, ""), col: cols[k], pts: U.years.map(yy => { const a = S.uprov < 0 ? U.total[yy] : (U.data[S.uprov] || {})[yy]; let v = 0; if (a) for (let q = 0; q < a.length; q += 2) if (a[q] === c) v = a[q + 1]; return [yy, v]; }) })), { h: 260, xlab: yy => `${String(yy - 1).slice(2)}/${String(yy).slice(2)}` });
+}
+function initUK() {
+  const U = D.uk; S.uyear = U.years[U.years.length - 1];
+  $("uyear").innerHTML = U.years.slice().reverse().map(y => `<option value="${y}">${y - 1}/${String(y).slice(2)}</option>`).join("");
+  $("uyear").onchange = e => { S.uyear = +e.target.value; ukDraw(); };
+  $("uall").onclick = () => { S.uprov = -1; $("uq").value = ""; ukDraw(); };
+  suggest($("uq"), $("usug"), () => U.providers.map((p, i) => [p[0], i, fmt(p[4]) + " non-UK", p[4]]), i => { S.uprov = i; ukDraw(); });
+  ukDraw();
+}
+
+/* ===== boot ===== */
+async function boot() {
+  const [pd, cj, tw] = await Promise.all(["data/page.json", "data/countries.json", "data/towns.json"].map(u => fetch(u).then(r => r.json())));
+  D = pd; CJ = cj; TOWNS = tw;
+  D.codes.forEach((c, i) => IDX[c] = i);
+  storyCharts(); initUK();
+  suggest($("q"), $("sug"), countryItems, i => selectCountry(i, true));
+  suggest($("xq"), $("xsug"), countryItems, i => selectCountry(i, true));
+  document.querySelectorAll("#xdir .btn").forEach(b => b.onclick = () => { S.dir = b.dataset.d; document.querySelectorAll("#xdir .btn").forEach(x => x.setAttribute("aria-pressed", x === b)); refresh(); });
+  $("year").oninput = e => setYear(+e.target.value);
+  $("play").onclick = play;
+  if (!window.L) { $("loading").textContent = "The map library did not load."; selectCountry(IDX.NGA); return; }
+  lmap = L.map("lmap", { minZoom: innerWidth < 600 ? 1 : 2, maxZoom: 8, zoomSnap: .5, worldCopyJump: false, maxBounds: WORLD.pad(.05), maxBoundsViscosity: .8, scrollWheelZoom: false });
+  lmap.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+  lmap.fitBounds([[-48, -140], [70, 160]]);
+  renderer = L.canvas({ padding: .3 });
+  for (const [k, p] of [["names", 640], ["borders", 270], ["hills", 260], ["land", 250]]) lmap.createPane(k).style.zIndex = p;
+  for (const k of ["names", "hills", "borders"]) lmap.getPane(k).style.pointerEvents = "none";
+  const esri = (svc, extra) => L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/${svc}/MapServer/tile/{z}/{y}/{x}`, { maxZoom: 16, attribution: "Tiles © Esri" + (extra || "") });
+  tiles = { light: esri("Canvas/World_Light_Gray_Base"), dark: esri("Canvas/World_Dark_Gray_Base"), satellite: esri("World_Imagery", ", Maxar, Earthstar Geographics") };
+  landL = L.geoJSON(cj, { pane: "land", renderer: L.canvas({ pane: "land", padding: .3 }), style: () => ({ stroke: false, fillColor: css("--land"), fillOpacity: 1 }),
+    onEachFeature: (f, l) => {
+      l.on("click", () => { if (f.properties.i >= 0) { S.sel = f.properties.i; S.arcs = true; $("xq").value = NM(S.sel); refresh(); } });
+      l.on("mouseover", () => { const i = f.properties.i, t = i >= 0 ? topOf(i, String(S.year)) : null; l.bindTooltip(t ? `<b>${esc(NM(i))}</b><br>number one: ${esc(NM(t[0]))} (${pct(t[1] / 1000)})${t[2] ? "<br>uncertain" : ""}` : `<b>${esc(f.properties.n)}</b><br>no ranking`, { sticky: true }).openTooltip(); if (i >= 0 && S.sel < 0) cardFor(i); });
+    } }).addTo(lmap);
+  borderL = L.geoJSON(cj, { pane: "borders", interactive: false, renderer: L.canvas({ pane: "borders", padding: .3 }), style: () => ({ color: css("--line"), weight: 1, opacity: .5, fill: false }) });
+  hillCv = document.createElement("canvas");
+  hillL = new CanvasOverlay(hillCv, WORLD, { pane: "hills", interactive: false, attribution: "Hills: AWS Terrain Tiles" });
+  arcL = L.layerGroup().addTo(lmap); dotL = L.layerGroup().addTo(lmap); nameL = L.layerGroup();
+  L.control.scale({ imperial: false, position: "bottomleft" }).addTo(lmap);
+  lmap.attributionControl.addAttribution("UNESCO UIS, Natural Earth, GeoNames");
+  initLayers(); applyLayers();
+  lmap.on("click", () => lmap.scrollWheelZoom.enable());
+  $("loading").style.display = "none";
+  S.sel = IDX.NGA; $("xq").value = NM(S.sel);
+  refresh();
+}
+boot().catch(e => { $("loading").textContent = "Could not load the data: " + e.message; console.error(e); });
+</script>
+</body>
+</html>

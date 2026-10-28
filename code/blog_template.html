@@ -1,0 +1,145 @@
+<!-- wp:paragraph -->
+<p><em>Most countries have one favourite place to send their students. I coloured every country by where its own students most often go to university abroad, every year from {{meta.first_year|raw}} to {{meta.last_year|raw}}. Old empires still show through, Turkey has become a magnet, and India has overtaken China in Britain.</em></p>
+<!-- /wp:paragraph -->
+
+<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://maps.tristanhotham.com/study-abroad/">Explore the interactive version</a></div>
+<!-- /wp:button -->
+<!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://doi.org/10.5281/zenodo.23748258">Read the paper</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+
+<!-- wp:paragraph -->
+<p>Where would you go to university if you left home? For a student in Lagos the answer is very likely Britain. In Almaty it is Russia, in Dakar it is France, in Hanoi it is now Japan. The reasons are old and familiar: a shared language, a shared history, an exam system built on the same model, and cousins who went before. Add them up across a whole country and you get a map with surprisingly sharp edges.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>The UNESCO Institute for Statistics collects, from almost every country, the number of international students in its universities and where they come from. Turn that table round and it tells you where each country's students go. In {{meta.last_year|raw}} it counts {{v.students_counted_last|int}} students abroad in {{meta.hosts_last|int}} host countries. For every country and every year I picked the single most common destination, and coloured the map by it.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">The map</h2>
+<!-- /wp:heading -->
+
+<!-- wp:image {"sizeSlug":"full"} -->
+<figure class="wp-block-image size-full">{{IMG|b_map.png|World map with each country coloured by the destination its students most often choose. The Americas, India and China are blue for the United States; much of West and Central Africa is purple for France; Central Asia is green for Russia; Nigeria and parts of the Middle East are red for the United Kingdom; Indonesia and the Pacific are yellow for Australia; South America is light blue for Argentina.|Each country coloured by its students' number one destination in {{meta.last_year|raw}}. Stronger colour means a bigger share go there; circles are sized and numbered by how many countries pick that destination. Dashed outlines mark countries where a host without data could be first.}}</figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph -->
+<p>The United States is still the most common answer: it is number one for {{v.n_usa_last|int}} countries in {{meta.last_year|raw}}. Then come the United Kingdom ({{v.n_gbr_last|int}}), France ({{v.n_fra_last|int}}), Australia ({{v.n_aus_last|int}}) and Germany ({{v.n_deu_last|int}}). Below them is a list that tells you a lot about neighbours. Argentina is first for {{top_counts.2023.ARG|int}} countries, including Brazil, Peru and Colombia. South Africa is first for much of southern Africa. Germans go to Austria and Austrians go to Germany.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Press play on the interactive version and the map changes slowly. In {{meta.first_year|raw}} the United States led {{v.n_usa_first|int}} countries. Some of that fall is real and some is a quirk of the data, because Germany did not report where its students came from until {{v.deu_first_year|raw}}. Counting only countries measured cleanly in both years, the United States went from {{changed_2013.count_a.USA|int}} to {{changed_2013.count_b.USA|int}} between 2013 and {{meta.last_year|raw}}, with Australia the most common winner.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"sizeSlug":"full"} -->
+<figure class="wp-block-image size-full">{{IMG|b_years.png|Four world maps of number one study destinations, for {{meta.first_year|raw}}, 2005, 2013 and {{meta.last_year|raw}}. Blue for the United States covers less of the world in later years, while green for Russia, maroon for Turkey and light blue for Argentina appear.|The same map in four years. Each title counts the countries for which the United States, the United Kingdom and France are first.}}</figure>
+<!-- /wp:image -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">Empires and languages</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>The strongest patterns are older than any student on the map. Russia is number one for all five Central Asian republics, and {{v.rus_ca_last|pct}} of their students abroad are in Russia. Portugal takes {{v.prt_luso_last|pct}} of students from Angola, Mozambique and the other Portuguese-speaking countries of Africa. France is first for most of French-speaking Africa.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>But look at the shares and the old routes are loosening. In {{meta.first_year|raw}}, {{v.fra_franco_first|pct}} of students abroad from French-speaking sub-Saharan Africa were in France. By {{meta.last_year|raw}} it was {{v.fra_franco_last|pct}}. Senegal and Morocco have become regional hubs, and Canada and Turkey have taken a share too. Senegal is now first for {{v.sen_tops_last|int}} of its neighbours. The exception runs the other way: Britain's share of students from English-speaking Africa rose from {{v.gbr_anglo_first|pct}} to {{v.gbr_anglo_last|pct}}, almost all of it after 2020, as Nigerians poured into British universities.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"sizeSlug":"full"} -->
+<figure class="wp-block-image size-full">{{IMG|b_blocs.png|Line chart, {{meta.first_year|raw}} to {{meta.last_year|raw}}, of the share of each group's students abroad who study in its old centre. The Maghreb to France falls from about 70% to 50%; French-official Africa to France falls from about 57% to 29%; Central Asia to Russia stays around 50%; English-official Africa to the UK rises sharply after 2020.|Share of each group's students abroad who study in the old centre. The dip for Portuguese-speaking Africa from 2008 is a change in how Portugal counted, not real movement.}}</figure>
+<!-- /wp:image -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">The new magnets</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>The biggest surprise for me was Turkey. It had {{magnets.TUR.v0|int}} international students in {{magnets.TUR.y0|raw}} and {{magnets.TUR.v1|int}} in {{magnets.TUR.y1|raw}}, a rise of {{magnets.TUR.x|f1}} times. They come from its neighbours and its language family: Syria, Azerbaijan, Iran and Turkmenistan send the most, and Turkey is now the number one destination for Syria, Azerbaijan and Iran. South Korea grew {{magnets.KOR.x|f1}} times, mostly with students from China and Vietnam, and is first for Mongolia. Malaysia grew {{magnets.MYS.x|f1}} times. And Vietnam, whose top destination was the United States until 2016, now sends more students to Japan and to South Korea.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"sizeSlug":"full"} -->
+<figure class="wp-block-image size-full">{{IMG|b_magnets.png|Line chart of international students in seven hosts from {{meta.first_year|raw}} to {{meta.last_year|raw}}. Russia rises to about 336,000, Turkey climbs steeply to about 300,000 after 2015, the UAE and China reach about 200,000 to 240,000, and South Korea and Malaysia reach about 110,000 to 130,000.|International students in seven fast-growing hosts (UNESCO totals).}}</figure>
+<!-- /wp:image -->
+
+<!-- wp:pullquote -->
+<figure class="wp-block-pullquote"><blockquote><p>Two of the biggest magnets, China and the United Arab Emirates, do not say where their students come from.</p></blockquote></figure>
+<!-- /wp:pullquote -->
+
+<!-- wp:paragraph -->
+<p>That is the main hole in the map. The Emirates reported {{magnets.ARE.v1|int}} international students in {{magnets.ARE.y1|raw}} and China {{v.chn_inbound_last|int}}, but neither gives a breakdown, so neither can be anyone's number one here. Where a missing host could plausibly be first, I draw the country with a dashed outline rather than pretend to know.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">India, China and Britain</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>China is still the world's biggest sender: {{v.chn_out_last|int}} students abroad in {{meta.last_year|raw}} on UNESCO's estimate, against {{v.ind_out_last|int}} from India. But India's numbers jumped after 2019 while China's flattened, and in Britain India has already overtaken China. HESA, which counts students at every UK university, shows India passing China in {{uk.india_over_china_first_year|raw}}. In {{uk.last_year|raw}} there were {{uk.top_last.0.1|int}} students from India and {{uk.top_last.1.1|int}} from China; ten years earlier India sent just {{uk.top_first.1.1|int}}.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"sizeSlug":"full"} -->
+<figure class="wp-block-image size-full">{{IMG|b_india_china.png|Two line charts. Left: students abroad from China rise to about 1.08 million and from India to about 834,000 by {{meta.last_year|raw}}. Right: in UK universities, Indian students overtake Chinese students in 2022/23; Nigerian students peak in 2022/23 and fall; Pakistani students rise.|Left: students abroad from China and India (UNESCO). Right: students from four countries in UK universities (HESA).}}</figure>
+<!-- /wp:image -->
+
+<!-- wp:paragraph -->
+<p>The interactive version has a map for every UK university. The change shows up there too: among universities and colleges with at least 500 international students, China was the biggest source at {{uk.provider_top_counts_2015.China|int}} in {{uk.first_year|raw}} and India at {{uk.provider_top_counts_2015.India|int}}. By {{uk.last_year|raw}} it was {{uk.provider_top_counts_2025.China|int}} for China and {{uk.provider_top_counts_2025.India|int}} for India. Meanwhile students from France, Italy and Germany all fell after Brexit.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:image {"sizeSlug":"full"} -->
+<figure class="wp-block-image size-full">{{IMG|b_uk.png|Bar chart comparing non-UK students in UK universities in {{uk.first_year|raw}} and {{uk.last_year|raw}} for the twelve largest countries. India rises from about 18,000 to 147,000, China from about 90,000 to 143,000, Pakistan and Nigeria grow, and Nepal appears.|Non-UK students in UK higher education by home country, {{uk.first_year|raw}} and {{uk.last_year|raw}} (HESA, rounded to the nearest five).}}</figure>
+<!-- /wp:image -->
+
+<!-- wp:heading -->
+<h2 class="wp-block-heading">How I did this</h2>
+<!-- /wp:heading -->
+
+<!-- wp:paragraph -->
+<p>The data are UNESCO's counts of internationally mobile tertiary students by host country and country of origin, retrieved from the UIS data API. Many countries skip years, so I filled a gap only when there were reported years on both sides (by a straight line) or carried the nearest year over for at most two years. Of {{meta.filled_rows|int}} rows used, {{meta.filled_by_method.interpolated|int}} are interpolated and {{meta.filled_by_method.carried|int}} carried. Countries with fewer than 50 students counted abroad are not ranked. Where a large host with no breakdown that year could be first, the country is flagged as uncertain ({{v.unc_last|int}} countries in {{meta.last_year|raw}}).</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>I checked the table two ways. The OECD's shares of each country's students by destination match the UNESCO-based shares to within one percentage point {{checks.oecd_within_1pp|pct}} of the time, and UNESCO's total for the UK in {{v.uk_check_year|raw}} is within {{v.uk_check_diff|pct1}} of HESA's own count. The main limits: hosts that never report origins (China, Singapore, Lebanon) cannot be ranked, Japan reports only part of its students by origin from 2015, and definitions of "mobile" student differ a little between countries.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:buttons -->
+<div class="wp-block-buttons"><!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://maps.tristanhotham.com/study-abroad/">Explore the interactive version</a></div>
+<!-- /wp:button -->
+<!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://doi.org/10.5281/zenodo.23748258">Read the paper</a></div>
+<!-- /wp:button -->
+<!-- wp:button -->
+<div class="wp-block-button"><a class="wp-block-button__link wp-element-button" href="https://github.com/Tristan-Hotham/study-abroad">Data and code</a></div>
+<!-- /wp:button --></div>
+<!-- /wp:buttons -->
+
+<!-- wp:heading {"level":3} -->
+<h3 class="wp-block-heading">Notes and sources</h3>
+<!-- /wp:heading -->
+
+<!-- wp:list -->
+<ul class="wp-block-list"><!-- wp:list-item -->
+<li>International student mobility: <a href="https://databrowser.uis.unesco.org">UNESCO Institute for Statistics</a>, UIS data API, release {{meta.uis_version|raw}}, extracted {{meta.uis_retrieved|raw}} (CC BY-SA 4.0).</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Check: <a href="https://data-explorer.oecd.org">OECD Education at a Glance database</a>, share of mobile students by destination (CC BY 4.0).</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>UK universities: <a href="https://www.hesa.ac.uk/data-and-analysis/students/table-28">HESA Table 28</a>, non-UK students by provider and country of permanent address, 2014/15 to 2024/25 (CC BY 4.0). University locations: <a href="https://www.wikidata.org">Wikidata</a> (CC0).</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Countries: <a href="https://www.naturalearthdata.com">Natural Earth</a> (public domain).</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>Paper, data and code: <a href="https://doi.org/10.5281/zenodo.23748258">Zenodo</a> and <a href="https://github.com/Tristan-Hotham/study-abroad">GitHub</a>. Text, figures and data CC BY-SA 4.0; code MIT.</li>
+<!-- /wp:list-item -->
+<!-- wp:list-item -->
+<li>I wrote the text, with drafting and editing assistance from Claude (Anthropic), which also helped prepare the analysis code. I reviewed and checked all text and results.</li>
+<!-- /wp:list-item --></ul>
+<!-- /wp:list -->
