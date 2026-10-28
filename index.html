@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Where Students Go</title>
+<meta name="description" content="Where would you go to university? Every country coloured by where its students most often go abroad, 1999 to 2023, from UNESCO data, with a flow explorer and a view of UK universities from HESA.">
+<meta property="og:title" content="Where would you go to university?">
+<meta property="og:description" content="Every country coloured by its students' number one study destination, 1999 to 2023: old empires, language blocs and new magnets such as Turkey, South Korea and Malaysia.">
+<meta property="og:image" content="https://maps.tristanhotham.com/study-abroad/header.png">
+<meta property="og:url" content="https://maps.tristanhotham.com/study-abroad/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800;9..144,900&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<style>
+/* Chalk-white paper with ink; destination colours come from the data (page.json) so the map, legend and charts agree. */
+:root{
+  --bg:#F7F5F0; --panel:#EDE9E0; --fg:#1C1D24; --muted:#62636E; --rule:#DCD7CC; --card:#FDFCF8; --border:#C9C3B6;
+  --accent:#2349C9; --accent2:#D62839; --sea:#E6ECEF; --land:#F4F1EA; --line:#5A5C66; --nodata:#EAE6DE;
+  --display:"Fraunces",Georgia,"Times New Roman",serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#15161B; --panel:#1F2027; --fg:#ECEBE6; --muted:#A3A3AD; --rule:#33343D; --card:#1C1D24; --border:#474955;
+  --accent:#5C83FF; --accent2:#FF5A68; --sea:#1A1F26; --land:#272932; --line:#CFCFD6; --nodata:#3A3B44; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#15161B; --panel:#1F2027; --fg:#ECEBE6; --muted:#A3A3AD; --rule:#33343D; --card:#1C1D24; --border:#474955;
+  --accent:#5C83FF; --accent2:#FF5A68; --sea:#1A1F26; --land:#272932; --line:#CFCFD6; --nodata:#3A3B44; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 18px/1.62 var(--body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow-x:hidden}
+.wrap{max-width:700px;margin:0 auto;padding-block:28px 64px}
+.wrap .bleed{width:min(1180px,calc(100vw - 32px));margin-left:calc((100% - min(1180px,100vw - 32px))/2)}
+a{color:inherit;text-decoration-color:var(--accent);text-underline-offset:3px}
+.kicker{font:500 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.kicker b{background:var(--fg);color:var(--bg);padding:5px 8px;font-weight:500}
+header.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 24px;align-items:end;border-bottom:6px double var(--fg);padding-bottom:22px;margin-top:18px}
+h1{font:900 clamp(38px,9vw,78px)/.94 var(--display);letter-spacing:-.02em;margin:0;text-wrap:balance}
+h1 em{font-style:normal;background:linear-gradient(90deg,#2349C9,#D62839 40%,#7A3DB8 70%,#F2A900);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mark{width:clamp(70px,15vw,120px);height:auto;display:block}
+.dek{grid-column:1/-1;font-size:21px;line-height:1.42;margin:8px 0 0;max-width:52ch}
+.byline{font:400 13px/1.4 var(--mono);color:var(--muted);margin-top:14px}
+h2{font:800 34px/1.06 var(--display);letter-spacing:-.01em;margin:56px 0 10px;text-wrap:balance}
+h2 .n{font:500 13px/1 var(--mono);color:var(--accent2);display:block;letter-spacing:.1em;margin-bottom:10px}
+h3{font:600 21px/1.25 var(--display);margin:30px 0 6px}
+p{margin:0 0 16px}
+.lede::first-letter{font:900 70px/.8 var(--display);float:left;margin:6px 10px 0 0;color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--rule);border:1px solid var(--rule);margin:26px 0 8px}
+.stats div{background:var(--card);padding:14px 12px}
+.stats b{display:block;font:900 clamp(22px,4.4vw,32px)/1 var(--display);letter-spacing:-.01em}
+.stats span{font:400 12px/1.35 var(--mono);color:var(--muted);display:block;margin-top:6px}
+@media (max-width:600px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.figure{margin:26px 0 30px}
+.fig-h{font:600 19px/1.25 var(--display);margin:0 0 4px}
+.fig-sub{font:400 13px/1.45 var(--mono);color:var(--muted);margin:0 0 12px}
+.src{font:400 12px/1.5 var(--mono);color:var(--muted);margin-top:10px}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+svg text{font-family:var(--mono);fill:var(--fg)}
+.lab{font-size:12px}.lab.m{fill:var(--muted)}.lab.b{font-weight:500}.lab.s{font-size:11px}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font:400 12px/1.45 var(--mono);padding:8px 10px;border-radius:3px;max-width:300px;z-index:1000;transform:translate(-50%,calc(-100% - 12px));display:none}
+.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 10px}
+.ctl-l{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:2px}
+.btn{font:500 12px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:8px 10px;cursor:pointer;min-height:36px}
+.btn[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.btn:focus-visible,input:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:3px;overflow:hidden;max-width:100%;flex-wrap:wrap}
+.seg .btn{border:0;border-radius:0;border-right:1px solid var(--border)}
+.seg .btn:last-child{border-right:0}
+select{font:500 12px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:8px 6px;min-height:36px;max-width:100%}
+.searchbox{position:relative;flex:1 1 240px;min-width:0}
+input[type=search]{font:400 15px/1 var(--mono);background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:10px 11px;min-height:40px;width:100%}
+.suggest{position:absolute;left:0;right:0;top:100%;margin:2px 0 0;padding:0;list-style:none;background:var(--card);border:1px solid var(--border);z-index:1001;font:400 13px/1.3 var(--mono);display:none;max-height:340px;overflow:auto}
+.suggest li{padding:8px 10px;cursor:pointer;border-bottom:1px solid var(--rule)}
+.suggest li span{color:var(--muted)}
+.suggest li[aria-selected="true"],.suggest li:hover{background:var(--panel)}
+.timebar{display:flex;gap:12px;align-items:center;margin:0 0 10px;flex-wrap:wrap}
+.yearbig{font:900 46px/1 var(--display);letter-spacing:-.02em;min-width:3.2ch}
+.timebar input[type=range]{flex:1 1 220px;accent-color:var(--fg);min-width:0}
+.play{font:600 13px/1 var(--mono);min-width:86px}
+.mapgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px;align-items:start}
+@media (max-width:920px){.mapgrid{grid-template-columns:minmax(0,1fr)}}
+.side{background:var(--card);border:1px solid var(--border);padding:12px 12px 10px;font:400 13px/1.45 var(--mono);min-width:0}
+.side h4{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 8px}
+.side h4:first-child{margin-top:2px}
+.mapbox{position:relative}
+#lmap{height:600px;border:1px solid var(--border);background:var(--sea);border-radius:2px}
+@media (max-width:600px){#lmap{height:440px}}
+.leaflet-container{font:400 12px/1.4 var(--mono);background:var(--sea)}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 13px/1.4 var(--mono);color:var(--muted);background:color-mix(in srgb,var(--panel) 80%,transparent);z-index:900;pointer-events:none}
+.lyrBtn{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;font:600 12px/1 var(--mono);padding:8px 10px;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.lyrBtn[aria-expanded="true"]{background:var(--fg);color:var(--bg)}
+.lyrPanel{background:var(--card);color:var(--fg);border:1px solid var(--border);border-radius:3px;padding:10px 12px 8px;margin-top:6px;width:240px;box-shadow:0 2px 10px rgba(0,0,0,.15);font:400 12px/1.3 var(--mono)}
+.lyrPanel[hidden]{display:none}
+.lyrPanel .row{margin:0 0 9px}
+.lyrPanel label{display:flex;gap:6px;align-items:center;cursor:pointer;font-weight:600}
+.lyrPanel input[type=range]{width:100%;accent-color:var(--fg)}
+.lyrPanel select{font:400 12px var(--mono);background:var(--bg);color:var(--fg);border:1px solid var(--border);border-radius:2px;padding:2px 4px;width:100%;min-height:26px}
+.lyrPanel .sub{display:flex;gap:6px;align-items:center;color:var(--muted);font-size:11px;margin-top:3px}
+.lyrPanel .sub span{flex:0 0 58px}
+.lyrPanel .reset{font:400 11px var(--mono);color:var(--muted);background:none;border:0;padding:0;cursor:pointer;text-decoration:underline}
+.town{font:500 11px/1 var(--mono);color:var(--fg);white-space:nowrap;text-shadow:0 0 3px var(--bg),0 0 3px var(--bg),0 0 2px var(--bg);pointer-events:none}
+.town i{display:inline-block;width:4px;height:4px;border-radius:50%;background:var(--fg);margin-right:4px;vertical-align:1px}
+.town.r3{font-weight:600;font-size:12px}
+.town.r0,.town.r1{font-weight:400;font-size:10.5px}
+.sat .town{color:#fff;text-shadow:0 0 3px #000,0 0 3px #000}
+.sat .town i{background:#fff}
+.hostlab{font:700 11px/1.1 var(--mono);color:#fff;white-space:nowrap;text-shadow:0 0 3px rgba(0,0,0,.65);pointer-events:none;text-align:center}
+.leaflet-tooltip{font:400 12px/1.4 var(--mono);background:var(--fg);color:var(--bg);border:0;border-radius:3px;box-shadow:none}
+.leaflet-tooltip:before{display:none}
+.leaflet-bar a,.leaflet-bar a:hover{background:var(--card);color:var(--fg);border-bottom-color:var(--border)}
+.leaflet-control-attribution{background:color-mix(in srgb,var(--card) 85%,transparent)!important;color:var(--muted)}
+.leaflet-control-attribution a{color:var(--fg)}
+.keys{display:flex;flex-direction:column;gap:2px;max-height:330px;overflow:auto}
+.key{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:3px;cursor:pointer;border:1px solid transparent;background:none;color:var(--fg);font:400 12.5px/1.2 var(--mono);text-align:left;width:100%}
+.key:hover{background:var(--panel)}
+.key[aria-pressed="true"]{border-color:var(--fg)}
+.key i{flex:0 0 14px;height:14px;border-radius:3px}
+.key b{margin-left:auto;font-weight:500}
+#card{min-height:90px}
+#card .big,#xcard .big{font:800 24px/1.12 var(--display);margin:4px 0 2px;text-wrap:balance}
+#card .sub{color:var(--muted);font-size:12px;margin:0 0 8px}
+.chip{display:inline-block;font:500 11px/1 var(--mono);padding:4px 7px;border-radius:999px;color:#fff;margin:0 4px 4px 0}
+.pull{font:600 26px/1.25 var(--display);border-left:6px solid var(--accent2);padding:4px 0 4px 18px;margin:30px 0}
+.note{background:var(--panel);border:1px solid var(--rule);padding:14px 16px;font-size:16px;margin:22px 0}
+.note h3{margin-top:0}
+.warn{font:400 12px/1.45 var(--mono);color:var(--muted);border-left:3px solid var(--accent2);padding-left:8px;margin:8px 0}
+table.t{width:100%;border-collapse:collapse;font:400 13px/1.35 var(--mono)}
+table.t th{text-align:left;font-weight:500;color:var(--muted);border-bottom:2px solid var(--fg);padding:6px 8px 6px 0}
+table.t td{border-bottom:1px solid var(--rule);padding:7px 8px 7px 0;vertical-align:top}
+table.t td.num,table.t th.num{text-align:right;white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.xgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+@media (max-width:760px){.xgrid{grid-template-columns:minmax(0,1fr)}}
+.xpanel{background:var(--card);border:1px solid var(--border);padding:12px;min-width:0}
+.xpanel h4{font:500 11px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:2px 0 10px}
+details{margin:14px 0}
+summary{font:500 13px/1.4 var(--mono);cursor:pointer;color:var(--fg);padding:8px 0}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.cta a{font:500 13px/1 var(--mono);text-decoration:none;border:1px solid var(--fg);padding:11px 14px;border-radius:3px}
+.cta a.p{background:var(--accent);border-color:var(--accent);color:#fff}
+footer{border-top:6px double var(--fg);margin-top:56px;padding-top:16px;font:400 13px/1.55 var(--mono);color:var(--muted)}
+footer p{margin:0 0 10px}
+.theme{position:fixed;right:12px;bottom:12px;z-index:1002}
+@media print{.theme,.controls,.timebar{display:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="kicker"><b>Data study</b><span>International students</span><span>The world, 1999 to 2023</span></div>
+<header class="hero">
+  <h1>Where would you go to <em>university?</em></h1>
+  <svg class="mark" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="56" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M60 4a56 56 0 0 1 0 112M60 4a56 56 0 0 0 0 112M8 44h104M8 76h104" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".4"/><path d="M24 84 Q50 30 86 40" fill="none" stroke="#2349C9" stroke-width="3.5" stroke-linecap="round"/><path d="M30 60 Q62 70 92 78" fill="none" stroke="#D62839" stroke-width="3.5" stroke-linecap="round"/><path d="M38 96 Q70 94 84 60" fill="none" stroke="#F2A900" stroke-width="3.5" stroke-linecap="round"/><path d="M45 37 l15 -8 l15 8 l-15 8z" fill="currentColor"/></svg>
+  <p class="dek">Millions of students leave home to study each year, and most countries have one favourite destination. I coloured every country by where its own students most often go abroad, year by year from 1999 to 2023. Press play and watch the old empires hold on, the language blocs stick together, and new magnets such as Turkey, South Korea and Malaysia pull students in.</p>
+</header>
+<div class="byline">Dr Tristan Hotham, Independent researcher · 2026 · Data: UNESCO Institute for Statistics (CC BY-SA 4.0); OECD (CC BY 4.0); HESA (CC BY 4.0); Natural Earth</div>
+
+<div class="stats">
+  <div><b style="color:var(--accent)">6.2m</b><span>students abroad in the 2023 data, by country of origin</span></div>
+  <div><b style="color:var(--accent)">38</b><span>countries whose number one destination is the United States in 2023</span></div>
+  <div><b style="color:#8C1C13">16.6x</b><span>growth in students studying in Turkey, 2005 to 2023</span></div>
+  <div><b style="color:var(--accent2)">2022/23</b><span>the year India overtook China as the biggest sender to the UK</span></div>
+</div>
+
+<p class="lede">Ask a student in Lagos, Almaty or Dakar where they would go to study abroad and you will often hear the same answer as their neighbours. Nigerians go to Britain, Kazakhs to Russia, Senegalese to France. The reasons are old: a shared language, a shared history, a shared exam system, and family who went before. But the map is not frozen. Over 24 years some of the biggest flows in the world have shifted, and a few countries that sent students away now pull them in.</p>
+<p>The source is the UNESCO Institute for Statistics, which collects from each country the number of internationally mobile students in its universities and, for most countries, where they come from. Read the other way round, the same table tells you where each country's students go. In 2023 it covers 6,234,900 students in 114 host countries. Some important hosts do not say where their students come from (China, the United Arab Emirates, Singapore), so the map can only rank destinations that do. I flag that wherever it could change the answer.</p>
+
+<h2 class="bleed"><span class="n">01 · The map</span>Each country's number one destination</h2>
+<div class="bleed">
+<div class="timebar"><button class="btn play" id="play" aria-label="Play the years">▶ Play</button><span class="yearbig" id="yearBig">2023</span><input type="range" id="year" min="1999" max="2023" step="1" value="2023" aria-label="Year"></div>
+<div class="controls"><div class="searchbox"><input type="search" id="q" placeholder="Search a country, e.g. Nigeria, Vietnam, Kazakhstan" autocomplete="off" aria-label="Search a country" aria-autocomplete="list" aria-controls="sug"><ul class="suggest" id="sug" role="listbox"></ul></div></div>
+<div class="mapgrid">
+  <div class="mapbox"><div id="lmap" role="application" aria-label="World map of each country's number one study destination"></div><div class="loading" id="loading">Loading the map…</div></div>
+  <aside class="side">
+    <h4>Destinations this year</h4>
+    <div class="keys" id="keys"></div>
+    <h4 id="cardH">Pick a country</h4>
+    <div id="card"><p class="sub">Hover or tap a country. Colour shows where its students most often go; stronger colour means a bigger share go there. Circles mark the destinations, sized by how many countries pick them.</p></div>
+  </aside>
+</div>
+<p class="src" id="mapNote"></p>
+</div>
+
+<p>In 2023 the United States is still the most common number one, chosen by 38 countries, followed by the United Kingdom (28), France (16), Australia (15) and Germany (11). In 1999 the United States led 76 countries. Part of that fall is real and part comes from gaps in the early data: Germany did not report its students by origin to UNESCO until 2013, and its absence flatters the United States. Comparing only countries measured cleanly in both years, the United States was number one for 39 of 165 countries in 2013 and 33 in 2023.</p>
+
+<h2><span class="n">02 · Explorer</span>Where a country's students go, and where its own students come from</h2>
+<p>Pick a country on the map or below. Leaving shows where its students study abroad; arriving shows where the students in its own universities come from. The year follows the slider above. Hollow points on the lines are years filled in between reported years.</p>
+<div class="controls"><div class="searchbox"><input type="search" id="xq" placeholder="Choose a country" autocomplete="off" aria-label="Choose a country for the explorer" aria-autocomplete="list" aria-controls="xsug"><ul class="suggest" id="xsug" role="listbox"></ul></div><div class="seg" id="xdir"><button class="btn" data-d="out" aria-pressed="true">Leaving</button><button class="btn" data-d="in">Arriving</button></div></div>
+<div id="xcard"></div>
+<div class="xgrid">
+  <div class="xpanel"><h4 id="xbarsH">Top destinations</h4><div class="chart" id="xbars"></div></div>
+  <div class="xpanel"><h4 id="xlineH">Over time</h4><div class="chart" id="xline"></div></div>
+</div>
+<p class="src" id="xnote"></p>
+
+<h2><span class="n">03 · Empires and languages</span>The old routes still run</h2>
+<p>The strongest patterns on the map are older than any of the students in them. French-speaking Africa looks to France, Portuguese-speaking Africa to Portugal, Central Asia to Russia, and much of English-speaking Africa to Britain or South Africa. Each of these routes has held for the whole period, but most have loosened.</p>
+<div class="figure"><p class="fig-h">Share of each group's students abroad who study in the old centre</p><p class="fig-sub">Students counted abroad from each group of countries, share in one host; lines are unbroken where hosts are filled between reported years</p><div class="chart" id="cBlocs"></div></div>
+<p>In 1999, 57% of students abroad from French-speaking sub-Saharan Africa were in France; by 2023 it was 29%, as Senegal, Morocco, Canada and Turkey took a growing share. Senegal itself is now the number one destination for 3 of its neighbours. The pull of Paris on Algeria, Morocco and Tunisia fell from 70% to 50%. Russia held its grip on Central Asia: 52% of Central Asian students abroad were in Russia in 2023, and it is number one for all five countries. Portugal still takes 61% of students from Angola, Mozambique, Cape Verde, Guinea-Bissau and São Tomé. (The dip in that line from 2008 is not real movement: Portugal changed how it counted, and its reported total fell from 17,950 in 2007 to 8,102 in 2008.) English-speaking Africa is the one group that moved towards its old centre: Britain's share rose from 24% to 33%, as Nigerians poured into British universities after 2020.</p>
+
+<h2><span class="n">04 · New magnets</span>Turkey, South Korea, Malaysia and the Gulf</h2>
+<div class="figure"><p class="fig-h">International students in some fast-growing hosts</p><p class="fig-sub">Inbound internationally mobile students (UNESCO totals, which exist even where the breakdown by origin does not)</p><div class="chart" id="cMagnets"></div></div>
+<p>Turkey is the biggest new magnet: 18,166 international students in 2005, 301,634 in 2023. Its students come from its neighbours and its language family: Syria (58,210), Azerbaijan (34,247), Iran (22,632) and Turkmenistan (18,250). Turkey is now the number one destination for Syria, Azerbaijan and Iran. South Korea grew 8.2 times from 2005, mostly with students from China and Vietnam, and is number one for Mongolia. Malaysia grew 4.5 times from 2006; 40% of its international students came from China in 2023. Russia, already large, reached 336,453.</p>
+<p>Two of the largest magnets cannot be put on the main map. The United Arab Emirates reported 237,034 international students in 2023, and China 200,892, but neither says where they come from. If the Emirates were counted it could be number one for some Gulf and Arab countries; I mark those countries as uncertain on the map. China's students come largely from its Asian neighbours and Africa, but the UNESCO data do not let me rank it.</p>
+<div class="pull">Vietnam's students now go to Japan before the United States, and Iran's go to Turkey.</div>
+
+<h2><span class="n">05 · India and China</span>The two giants of the student world</h2>
+<div class="figure"><p class="fig-h">Students abroad from China and India</p><p class="fig-sub">UNESCO estimate of each country's internationally mobile students studying abroad, all destinations</p><div class="chart" id="cIC"></div></div>
+<p>China has been the world's biggest sender throughout: 137,674 students abroad in 1999, 1,076,015 in 2023. India has grown faster, from 60,252 to 833,835, and its numbers jumped after 2019 while China's flattened. On UNESCO's estimate India has not yet overtaken China worldwide. It has in Britain: in the UNESCO data the UK had more Indian than Chinese students in 2023 (171,871 against 156,481), and HESA's own figures show the same switch in 2022/23. In the United States, China was still ahead in 2023 (266,587 against 223,117) on these data.</p>
+
+<h2 class="bleed"><span class="n">06 · The UK by university</span>Where each university's students come from</h2>
+<div class="bleed">
+<p style="max-width:700px;margin-inline:auto">HESA publishes, for every UK university and college, its non-UK students by home country. Pick one to see its own map. Counts are rounded by HESA to the nearest five; the years are academic years from 2014/15 to 2024/25.</p>
+<div class="controls" style="max-width:900px;margin-inline:auto"><div class="searchbox"><input type="search" id="uq" placeholder="Search a university, e.g. Edinburgh, Coventry, LSE" autocomplete="off" aria-label="Search a UK university" aria-autocomplete="list" aria-controls="usug"><ul class="suggest" id="usug" role="listbox"></ul></div><select id="uyear" aria-label="Academic year"></select><button class="btn" id="uall">All UK</button></div>
+<div style="max-width:1100px;margin-inline:auto">
+<div id="ucard"></div>
+<div class="chart" id="umap"></div>
+<div class="xgrid" style="margin-top:14px"><div class="xpanel"><h4>Top home countries</h4><div class="chart" id="ubars"></div></div><div class="xpanel"><h4>Over time, top five</h4><div class="chart" id="uline"></div></div></div>
+</div>
+</div>
+<p>Across the UK, students from India (146,505) narrowly outnumbered those from China (143,145) in 2024/25, ten years after India sent just 18,420. Nigeria rose to 72,325 in 2022/23 and fell back to 38,010 by 2024/25. Students from the European Union fell after Brexit: France, Italy and Germany all sent fewer in 2024/25 than in 2014/15. Of the 122 providers with at least 1,000 non-UK students in 2024/25, China is the biggest source for 36 and India for 62.</p>
+
+<h2><span class="n">07 · Checking</span>How far to trust the map</h2>
+<p>Two independent checks agree well with the UNESCO table. The OECD publishes, for its members and partners, the share of each origin country's mobile students who study in each destination. Across 56,908 matching host, origin and year combinations, the UNESCO-based share is within one percentage point of the OECD share 84% of the time (correlation 0.9089); the larger differences come from the two sources using slightly different totals for the country of origin. For the UK, the UNESCO total for 2022/23 (748,461) is within 1.4% of HESA's own count (758,865).</p>
+<div class="note">
+<h3>Method and caveats</h3>
+<p><b>The table.</b> UNESCO Institute for Statistics (UIS) data, release 20260507-91260335, retrieved through the UIS data API on 2026-10-28: for each host country and year, inbound internationally mobile tertiary students by country of origin (217 origin indicators). "Internationally mobile" means students who crossed a border to study, usually defined by previous education or residence rather than citizenship. Years are UNESCO reference years (the academic year ending in that year).</p>
+<p><b>Gaps.</b> Many hosts skip years. A host-year counts as reported when its students by origin add up to at least 30% of its total; a missing year between two reported years at most nine years apart is filled by straight-line interpolation, and otherwise the nearest reported year within two years is carried over. Of the 213,434 host, origin and year rows used, 22,353 are interpolated and 12,087 carried. The United States is filled between 1999 and 2005 and between 2005 and 2013. Nothing else is estimated.</p>
+<p><b>Uncertain countries.</b> Some hosts report a total but not the origins, or stop reporting for long spells (Germany before 2013, Japan from 2000 to 2012, Argentina from 2001 to 2015, the United Arab Emirates after 2012). For each such host and year I take its nearest reported breakdown, scaled by the change in its total where known, and if that could reach 70% of the counted number one, the country is drawn with a dashed outline and named as uncertain. That flags 22 countries in 2023 and 52 in 1999. China, Singapore and Lebanon never report origins and cannot be tested this way.</p>
+<p><b>Japan</b> reports only part of its students by origin from 2015 (not those from China or South Korea), so its counts are a lower bound. Countries with fewer than 50 students counted abroad are left grey. Small countries' answers can swing on a handful of students.</p>
+</div>
+
+<div class="cta"><a class="p" href="https://doi.org/10.5281/zenodo.23748258">Read the paper</a><a href="https://github.com/Tristan-Hotham/study-abroad">Data and code</a><a href="https://blog.tristanhotham.com/2026/10/28/study-abroad/">Blog post</a></div>
+
+<details><summary>Sources and licences</summary>
+<p class="src">International student mobility: UNESCO Institute for Statistics (UIS), UIS Data API (https://api.uis.unesco.org), release 20260507-91260335, extracted 2026-10-28; licensed CC BY-SA 4.0. Check: OECD Education at a Glance database, Data Explorer (sdmx.oecd.org), share of mobile students by destination, extracted 2026-10-28; CC BY 4.0. UK providers: HESA Open data, Table 28, Non-UK permanent address students by HE provider and country of permanent address, 2014/15 to 2024/25 (https://www.hesa.ac.uk/data-and-analysis/students/table-28), extracted 2026-10-28; CC BY 4.0; country names from ONS (OGL v3). University locations: Wikidata (CC0). Country outlines: Natural Earth 1:50m (public domain). Place names: GeoNames cities15000 (CC BY 4.0). Hill shading: AWS Terrain Tiles (Mapzen terrarium). Optional base maps: Tiles © Esri.</p>
+</details>
+
+<footer>
+  <p>Dr Tristan Hotham, Independent researcher. ORCID 0000-0003-4931-9349. Cite as: Hotham, T. (2026) Where would you go to university? International student mobility by country of origin, 1999 to 2023. https://doi.org/10.5281/zenodo.23748258</p>
+  <p>I wrote the text, with drafting and editing assistance from Claude (Anthropic), which also helped prepare the analysis code. I reviewed and checked all text and results.</p>
+  <p>Text, figures and derived data: CC BY-SA 4.0 (because the UNESCO data are CC BY-SA 4.0). Code: MIT. Other studies: <a href="https://maps.tristanhotham.com/games-on-the-map/">Games on the map</a>, <a href="https://maps.tristanhotham.com/country-names/">Country names</a>, <a href="https://blog.tristanhotham.com/">all posts</a>.</p>
+</footer>
+</div>
+<div class="tip" id="tip"></div>
+<button class="btn theme" id="theme" aria-label="Toggle dark mode">◐</button>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+"use strict";
+const R = {"meta":{"first_year":1999,"last_year":2023,"uis_version":"20260507-91260335","uis_retrieved":"2026-10-28","oecd_retrieved":"2026-10-28","hesa_retrieved":"2026-10-28","reported_rows":189240,"filled_rows":213434,"filled_by_method":{"reported":178994,"interpolated":22353,"carried":12087},"hosts_any_bilateral":161,"origins":209,"students_counted_last":6234900,"hosts_last":114,"origins_mapped_first":195,"origins_mapped_last":200},"coverage_by_year":[{"year":1999,"hosts":83,"hosts_reported":60,"students_counted":1385754,"inbound_total_all_hosts":1441886,"biggest_missing":[["UKR",18312],["LBN",15596],["MAR",4190],["PSE",2770],["SEN",1295],["MLI",1221]]},{"year":2000,"hosts":88,"hosts_reported":56,"students_counted":1462761,"inbound_total_all_hosts":1032059,"biggest_missing":[["LBN",14008],["IRQ",8280],["MAR",4502],["MLI",1292],["PSE",777],["DJI",0]]},{"year":2001,"hosts":96,"hosts_reported":61,"students_counted":1601638,"inbound_total_all_hosts":1094319,"biggest_missing":[["LBN",14770],["UKR",12880],["PSE",378],["CYM",143],["DJI",0],["KNA",0]]},{"year":2002,"hosts":98,"hosts_reported":62,"students_counted":1690089,"inbound_total_all_hosts":1265666,"biggest_missing":[["UKR",17210],["LBN",15186],["BGD",354],["DJI",0],["KNA",0]]},{"year":2003,"hosts":96,"hosts_reported":73,"students_counted":1887412,"inbound_total_all_hosts":1504413,"biggest_missing":[["EGY",27158],["LBN",12210],["BGD",385],["GAB",372],["KNA",0],["MDV",0]]},{"year":2004,"hosts":100,"hosts_reported":70,"students_counted":1928314,"inbound_total_all_hosts":1536919,"biggest_missing":[["EGY",29064],["LBN",13930],["DZA",4677],["IRQ",3557],["BGD",672],["GIN",371]]},{"year":2005,"hosts":99,"hosts_reported":66,"students_counted":2032254,"inbound_total_all_hosts":2154971,"biggest_missing":[["EGY",30723],["LBN",14073],["DZA",5343],["BFA",880],["BGD",748],["BWA",654]]},{"year":2006,"hosts":99,"hosts_reported":73,"students_counted":2134286,"inbound_total_all_hosts":1696114,"biggest_missing":[["CHN",36386],["EGY",33563],["LBN",17199],["DZA",5863],["BGD",939],["GIN",899]]},{"year":2007,"hosts":103,"hosts_reported":72,"students_counted":2311212,"inbound_total_all_hosts":1903897,"biggest_missing":[["CHN",42138],["EGY",35031],["LBN",22674],["YEM",6423],["DZA",5709],["GHA",1899]]},{"year":2008,"hosts":105,"hosts_reported":77,"students_counted":2504467,"inbound_total_all_hosts":2059480,"biggest_missing":[["CHN",51038],["SGP",40401],["BEN",4086],["GHA",2754],["TUN",2480],["BGD",1049]]},{"year":2009,"hosts":107,"hosts_reported":76,"students_counted":2725218,"inbound_total_all_hosts":2205566,"biggest_missing":[["CHN",61211],["SGP",48623],["DZA",6067],["TUN",2404],["BGD",1589],["AND",102]]},{"year":2010,"hosts":114,"hosts_reported":81,"students_counted":2938478,"inbound_total_all_hosts":2348163,"biggest_missing":[["CHN",71673],["EGY",49011],["SGP",47915],["LBN",30436],["BEN",9060],["DZA",6544]]},{"year":2011,"hosts":116,"hosts_reported":85,"students_counted":3430693,"inbound_total_all_hosts":2714717,"biggest_missing":[["CHN",79638],["SGP",52959],["LBN",33178],["UGA",15035],["YEM",11393],["SEN",8568]]},{"year":2012,"hosts":120,"hosts_reported":89,"students_counted":3438056,"inbound_total_all_hosts":2748929,"biggest_missing":[["CHN",88979],["SGP",48938],["LBN",27230],["SEN",14788],["DZA",7211],["ALB",2091]]},{"year":2013,"hosts":120,"hosts_reported":86,"students_counted":3591208,"inbound_total_all_hosts":3553023,"biggest_missing":[["CHN",96409],["SEN",18485],["MEX",8020],["DZA",7403],["BFA",2154],["PSE",0]]},{"year":2014,"hosts":120,"hosts_reported":95,"students_counted":3955136,"inbound_total_all_hosts":4039384,"biggest_missing":[["CHN",108217],["LBN",17495],["DZA",7953],["BFA",1175],["AFG",0],["PSE",0]]},{"year":2015,"hosts":123,"hosts_reported":97,"students_counted":4136916,"inbound_total_all_hosts":4100951,"biggest_missing":[["CHN",123127],["LBN",21332],["DZA",7967],["PSE",0],["SYC",0]]},{"year":2016,"hosts":124,"hosts_reported":101,"students_counted":4360049,"inbound_total_all_hosts":4896883,"biggest_missing":[["CHN",137527],["SGP",53122],["LBN",19621],["DZA",7180],["PSE",0],["SYC",0]]},{"year":2017,"hosts":125,"hosts_reported":106,"students_counted":4560817,"inbound_total_all_hosts":5072114,"biggest_missing":[["CHN",157108],["SGP",53204],["LBN",19670],["DZA",8546],["PSE",0],["SYC",0]]},{"year":2018,"hosts":124,"hosts_reported":99,"students_counted":4802531,"inbound_total_all_hosts":5415058,"biggest_missing":[["ARE",199958],["CHN",178271],["SGP",51756],["LBN",21518],["DZA",8503],["PSE",0]]},{"year":2019,"hosts":126,"hosts_reported":99,"students_counted":5099307,"inbound_total_all_hosts":4874868,"biggest_missing":[["ARE",204942],["CHN",201177],["SGP",53030],["LBN",23264],["DZA",8300],["JAM",6423]]},{"year":2020,"hosts":125,"hosts_reported":101,"students_counted":5413703,"inbound_total_all_hosts":5935404,"biggest_missing":[["CHN",225100],["ARE",210030],["SGP",54982],["LBN",22894],["ISR",13277],["DZA",8582]]},{"year":2021,"hosts":120,"hosts_reported":94,"students_counted":5440867,"inbound_total_all_hosts":6236823,"biggest_missing":[["CHN",221653],["ARE",208453],["SGP",58269],["LBN",33910],["ISR",13818],["URY",4554]]},{"year":2022,"hosts":118,"hosts_reported":93,"students_counted":5770857,"inbound_total_all_hosts":5617151,"biggest_missing":[["ARE",225845],["CHN",210903],["SGP",66308],["LBN",40246],["ISR",13181],["URY",4428]]},{"year":2023,"hosts":114,"hosts_reported":94,"students_counted":6234900,"inbound_total_all_hosts":6831515,"biggest_missing":[["ARE",237034],["CHN",200892],["SGP",71239],["LBN",34178],["ISR",13597],["URY",4207]]}],"uncertain_by_year":{"1999":52,"2000":51,"2001":47,"2002":40,"2003":41,"2004":36,"2005":31,"2006":33,"2007":31,"2008":26,"2009":24,"2010":23,"2011":18,"2012":20,"2013":20,"2014":11,"2015":12,"2016":13,"2017":12,"2018":22,"2019":23,"2020":20,"2021":22,"2022":20,"2023":22},"blocs":{"francophone_africa":{"label":"French-official sub-Saharan Africa","members":["BEN","BFA","CIV","GAB","GIN","MLI","NER","SEN","TGO","CMR","CAF","TCD","COG","COD","DJI","COM","MDG","BDI","RWA"],"by_year":{"1999":{"total":37258,"share":{"FRA":0.5749,"BEL":0.1248,"USA":0.0709,"CAN":0.0441,"ITA":0.0257,"MDG":0.0232},"tops":{"FRA":14,"BEL":3,"MDG":1,"TGO":1},"n":19},"2000":{"total":40784,"share":{"FRA":0.5713,"BEL":0.1236,"USA":0.0775,"CAN":0.0441,"ITA":0.0233,"MDG":0.0224},"tops":{"FRA":15,"BEL":3,"TGO":1},"n":19},"2001":{"total":46423,"share":{"FRA":0.5521,"BEL":0.1026,"USA":0.0793,"MAR":0.0503,"CAN":0.0422,"ITA":0.0239},"tops":{"FRA":15,"BEL":3,"MDG":1},"n":19},"2002":{"total":52664,"share":{"FRA":0.57,"BEL":0.0964,"USA":0.0797,"MAR":0.0443,"CAN":0.0396,"CMR":0.0247},"tops":{"FRA":14,"BEL":3,"MDG":1,"CMR":1},"n":19},"2003":{"total":61480,"share":{"FRA":0.6284,"USA":0.0767,"BEL":0.0568,"MAR":0.038,"CAN":0.0355,"ITA":0.0232},"tops":{"FRA":16,"BEL":2,"CMR":1},"n":19},"2004":{"total":62530,"share":{"FRA":0.6359,"USA":0.0837,"MAR":0.0444,"CAN":0.0347,"BEL":0.0294,"ITA":0.0272},"tops":{"FRA":17,"MDG":1,"CMR":1},"n":19},"2005":{"total":64915,"share":{"FRA":0.638,"USA":0.0887,"MAR":0.0481,"CAN":0.0334,"ITA":0.0309,"CHE":0.0213},"tops":{"FRA":18,"CMR":1},"n":19},"2006":{"total":72583,"share":{"FRA":0.6108,"USA":0.0786,"MAR":0.051,"CAN":0.045,"ITA":0.0302,"CIV":0.03},"tops":{"FRA":17,"ZAF":1,"CMR":1},"n":19},"2007":{"total":73388,"share":{"FRA":0.597,"USA":0.0771,"MAR":0.0527,"CAN":0.0416,"ITA":0.0345,"CIV":0.0297},"tops":{"FRA":17,"ZAF":1,"CMR":1},"n":19},"2008":{"total":78009,"share":{"FRA":0.556,"USA":0.0719,"MAR":0.0521,"CAN":0.0462,"ITA":0.0383,"CIV":0.0279},"tops":{"FRA":16,"ZAF":1,"BDI":1,"CMR":1},"n":19},"2009":{"total":78149,"share":{"FRA":0.5563,"USA":0.0711,"ITA":0.0439,"CAN":0.0403,"MAR":0.0344,"ZAF":0.031},"tops":{"FRA":16,"ZAF":1,"BDI":1,"CMR":1},"n":19},"2010":{"total":87151,"share":{"FRA":0.5238,"USA":0.0632,"MAR":0.0513,"ITA":0.0407,"CAN":0.0392,"ZAF":0.0323},"tops":{"FRA":16,"ZAF":1,"BDI":1,"CMR":1},"n":19},"2011":{"total":111388,"share":{"FRA":0.4247,"DEU":0.0611,"ZAF":0.0587,"USA":0.049,"ITA":0.0355,"MAR":0.0348},"tops":{"FRA":16,"ZAF":1,"COD":1,"CMR":1},"n":19},"2012":{"total":113320,"share":{"FRA":0.4161,"DEU":0.06,"USA":0.0478,"ZAF":0.0466,"ITA":0.0373,"COD":0.0336},"tops":{"FRA":16,"ZAF":1,"COD":1,"CMR":1},"n":19},"2013":{"total":111813,"share":{"FRA":0.3396,"DEU":0.0608,"USA":0.048,"ZAF":0.0475,"ITA":0.0435,"SAU":0.0425},"tops":{"FRA":14,"DEU":1,"ZAF":1,"MDG":1,"COD":1,"CMR":1},"n":19},"2014":{"total":129968,"share":{"FRA":0.3,"MAR":0.0669,"DEU":0.0554,"USA":0.0517,"SAU":0.0423,"SEN":0.0422},"tops":{"FRA":14,"DEU":1,"ZAF":1,"MDG":1,"COD":1,"CMR":1},"n":19},"2015":{"total":138321,"share":{"FRA":0.2886,"MAR":0.0718,"USA":0.0559,"DEU":0.0555,"SAU":0.0406,"SEN":0.0396},"tops":{"FRA":13,"DEU":1,"ZAF":1,"MDG":1,"MAR":1,"COD":1,"CMR":1},"n":19},"2016":{"total":144459,"share":{"FRA":0.2902,"MAR":0.0793,"DEU":0.0561,"USA":0.0558,"SAU":0.0424,"CAN":0.04},"tops":{"FRA":13,"DEU":1,"ZAF":1,"MDG":1,"MAR":1,"USA":1,"CMR":1},"n":19},"2017":{"total":152853,"share":{"FRA":0.2963,"MAR":0.0779,"DEU":0.0548,"USA":0.0542,"CAN":0.0412,"SAU":0.0396},"tops":{"FRA":13,"RWA":1,"DEU":1,"ZAF":1,"MDG":1,"USA":1,"CMR":1},"n":19},"2018":{"total":154766,"share":{"FRA":0.2954,"MAR":0.083,"DEU":0.0571,"USA":0.0567,"CAN":0.0434,"SAU":0.0374},"tops":{"FRA":12,"RWA":1,"DEU":1,"ZAF":1,"MDG":1,"MAR":1,"USA":1,"NER":1},"n":19},"2019":{"total":177645,"share":{"FRA":0.2851,"MAR":0.0843,"CMR":0.0707,"DEU":0.0491,"USA":0.048,"CAN":0.0427},"tops":{"FRA":11,"RWA":1,"DEU":1,"ZAF":1,"MDG":1,"MAR":1,"TGO":1,"USA":1,"CMR":1},"n":19},"2020":{"total":190086,"share":{"FRA":0.2842,"MAR":0.0868,"CMR":0.0638,"DEU":0.0511,"CAN":0.0505,"USA":0.0435},"tops":{"FRA":11,"RWA":1,"DEU":1,"BDI":1,"TUR":1,"MAR":1,"TGO":1,"USA":1,"CMR":1},"n":19},"2021":{"total":206153,"share":{"FRA":0.2867,"MAR":0.0727,"CMR":0.0633,"CAN":0.0493,"DEU":0.0492,"TUR":0.0393},"tops":{"FRA":13,"DEU":1,"BDI":1,"TUR":1,"TGO":1,"USA":1,"CMR":1},"n":19},"2022":{"total":204330,"share":{"FRA":0.2979,"MAR":0.0739,"CAN":0.057,"TUR":0.0498,"DEU":0.0493,"CMR":0.0412},"tops":{"FRA":13,"DEU":1,"BDI":1,"TUR":1,"TGO":1,"USA":1,"CMR":1},"n":19},"2023":{"total":227490,"share":{"FRA":0.2867,"SEN":0.093,"MAR":0.0715,"CAN":0.0603,"TUR":0.057,"DEU":0.0422},"tops":{"FRA":10,"SEN":3,"DEU":1,"BDI":1,"TUR":1,"TGO":1,"USA":1,"CMR":1},"n":19}}},"maghreb":{"label":"Algeria, Morocco and Tunisia","members":["DZA","MAR","TUN"],"by_year":{"1999":{"total":55575,"share":{"FRA":0.7016,"BEL":0.0942,"ESP":0.0432,"NLD":0.0335,"USA":0.0321,"CAN":0.0254},"tops":{"FRA":3},"n":3},"2000":{"total":59260,"share":{"FRA":0.6894,"BEL":0.1018,"ESP":0.0564,"NLD":0.0322,"USA":0.0309,"CAN":0.0255},"tops":{"FRA":3},"n":3},"2001":{"total":62251,"share":{"FRA":0.7032,"BEL":0.089,"ESP":0.0486,"NLD":0.0319,"USA":0.0302,"CAN":0.0259},"tops":{"FRA":3},"n":3},"2002":{"total":70814,"share":{"FRA":0.7259,"BEL":0.0823,"ESP":0.0482,"NLD":0.0281,"USA":0.0272,"CAN":0.0225},"tops":{"FRA":3},"n":3},"2003":{"total":80806,"share":{"FRA":0.7755,"ESP":0.0446,"BEL":0.0386,"USA":0.0244,"NLD":0.021,"CAN":0.0205},"tops":{"FRA":3},"n":3},"2004":{"total":78363,"share":{"FRA":0.8269,"USA":0.0258,"BEL":0.0205,"CAN":0.0192,"ESP":0.019,"UKR":0.0161},"tops":{"FRA":3},"n":3},"2005":{"total":73633,"share":{"FRA":0.8398,"USA":0.0281,"ESP":0.0211,"CAN":0.021,"UKR":0.0172,"ITA":0.0151},"tops":{"FRA":3},"n":3},"2006":{"total":76640,"share":{"FRA":0.8002,"CAN":0.0651,"USA":0.0266,"ESP":0.0214,"UKR":0.0164,"ITA":0.0156},"tops":{"FRA":3},"n":3},"2007":{"total":72328,"share":{"FRA":0.8066,"CAN":0.041,"USA":0.0278,"ESP":0.0254,"ITA":0.0226,"UKR":0.0171},"tops":{"FRA":3},"n":3},"2008":{"total":73963,"share":{"FRA":0.7651,"CAN":0.0488,"ESP":0.0385,"USA":0.0268,"ITA":0.0262,"UKR":0.0191},"tops":{"FRA":3},"n":3},"2009":{"total":76395,"share":{"FRA":0.7513,"ESP":0.0439,"CAN":0.0335,"ITA":0.031,"USA":0.0256,"UKR":0.019},"tops":{"FRA":3},"n":3},"2010":{"total":78558,"share":{"FRA":0.7535,"ESP":0.0478,"CAN":0.0317,"ITA":0.0307,"USA":0.0246,"ROU":0.0211},"tops":{"FRA":3},"n":3},"2011":{"total":85915,"share":{"FRA":0.7111,"DEU":0.0546,"ESP":0.0396,"ITA":0.0303,"CAN":0.0281,"USA":0.0221},"tops":{"FRA":3},"n":3},"2012":{"total":85876,"share":{"FRA":0.7187,"DEU":0.0547,"ESP":0.0402,"ITA":0.0315,"CAN":0.0274,"USA":0.0218},"tops":{"FRA":3},"n":3},"2013":{"total":76508,"share":{"FRA":0.6536,"DEU":0.0614,"ESP":0.0432,"CAN":0.0315,"ITA":0.0301,"ROU":0.0251},"tops":{"FRA":3},"n":3},"2014":{"total":80889,"share":{"FRA":0.6272,"DEU":0.0608,"ITA":0.0359,"ESP":0.0337,"CAN":0.0284,"ROU":0.0266},"tops":{"FRA":3},"n":3},"2015":{"total":83323,"share":{"FRA":0.6209,"DEU":0.0664,"ITA":0.0379,"CAN":0.0313,"UKR":0.0308,"ESP":0.0257},"tops":{"FRA":3},"n":3},"2016":{"total":89069,"share":{"FRA":0.611,"DEU":0.0708,"ITA":0.0372,"UKR":0.032,"CAN":0.032,"USA":0.0251},"tops":{"FRA":3},"n":3},"2017":{"total":98148,"share":{"FRA":0.6119,"DEU":0.0769,"ITA":0.0344,"UKR":0.034,"CAN":0.0289,"RUS":0.0272},"tops":{"FRA":3},"n":3},"2018":{"total":104493,"share":{"FRA":0.5936,"DEU":0.0919,"UKR":0.0396,"ITA":0.0371,"RUS":0.0326,"CAN":0.029},"tops":{"FRA":3},"n":3},"2019":{"total":111190,"share":{"FRA":0.5917,"DEU":0.0943,"UKR":0.0496,"RUS":0.0352,"CAN":0.0311,"ESP":0.0241},"tops":{"FRA":3},"n":3},"2020":{"total":118488,"share":{"FRA":0.5519,"DEU":0.0973,"UKR":0.0569,"RUS":0.0492,"CAN":0.0354,"ESP":0.0264},"tops":{"FRA":3},"n":3},"2021":{"total":128515,"share":{"FRA":0.5302,"DEU":0.095,"UKR":0.0664,"RUS":0.0448,"CAN":0.0361,"TUR":0.0328},"tops":{"FRA":3},"n":3},"2022":{"total":136256,"share":{"FRA":0.5159,"DEU":0.0923,"UKR":0.0533,"CAN":0.0472,"RUS":0.0454,"TUR":0.0403},"tops":{"FRA":3},"n":3},"2023":{"total":144872,"share":{"FRA":0.4953,"DEU":0.0892,"TUR":0.0581,"CAN":0.0519,"RUS":0.0439,"UKR":0.0414},"tops":{"FRA":3},"n":3}}},"anglophone_africa":{"label":"English-official Africa","members":["NGA","GHA","KEN","UGA","TZA","ZMB","MWI","BWA","SLE","GMB","LSO","SWZ","ZWE","NAM","LBR"],"by_year":{"1999":{"total":45993,"share":{"ZAF":0.2989,"USA":0.2985,"GBR":0.2362,"IND":0.0259,"CAN":0.0259,"SAU":0.0127},"tops":{"USA":7,"ZAF":5,"GBR":3},"n":15},"2000":{"total":55257,"share":{"ZAF":0.3534,"USA":0.2783,"GBR":0.1953,"CAN":0.023,"AUS":0.0225,"IND":0.0216},"tops":{"USA":9,"ZAF":6},"n":15},"2001":{"total":62944,"share":{"ZAF":0.3682,"USA":0.2706,"GBR":0.1845,"AUS":0.0345,"CAN":0.0241,"IND":0.0214},"tops":{"USA":9,"ZAF":6},"n":15},"2002":{"total":72018,"share":{"ZAF":0.3962,"USA":0.2595,"GBR":0.1745,"AUS":0.043,"CAN":0.0247,"IND":0.0115},"tops":{"USA":9,"ZAF":6},"n":15},"2003":{"total":81466,"share":{"ZAF":0.3982,"USA":0.2497,"GBR":0.1813,"AUS":0.0454,"CAN":0.0238,"MYS":0.0105},"tops":{"ZAF":7,"USA":7,"GBR":1},"n":15},"2004":{"total":86466,"share":{"ZAF":0.3732,"USA":0.2544,"GBR":0.2185,"AUS":0.0413,"CAN":0.0241,"MYS":0.0103},"tops":{"ZAF":7,"USA":7,"GBR":1},"n":15},"2005":{"total":90550,"share":{"ZAF":0.342,"USA":0.2612,"GBR":0.2339,"AUS":0.0407,"CAN":0.0246,"MYS":0.0098},"tops":{"ZAF":7,"USA":6,"GBR":2},"n":15},"2006":{"total":91624,"share":{"ZAF":0.3449,"USA":0.25,"GBR":0.2455,"AUS":0.0417,"CAN":0.0164,"IND":0.0102},"tops":{"ZAF":7,"USA":6,"GBR":2},"n":15},"2007":{"total":101521,"share":{"ZAF":0.3679,"GBR":0.2331,"USA":0.2182,"AUS":0.0429,"CAN":0.026,"IND":0.011},"tops":{"ZAF":7,"USA":6,"GBR":2},"n":15},"2008":{"total":111948,"share":{"ZAF":0.3727,"GBR":0.2046,"USA":0.1912,"AUS":0.041,"MYS":0.0331,"CAN":0.0247},"tops":{"ZAF":7,"USA":6,"GBR":2},"n":15},"2009":{"total":119866,"share":{"ZAF":0.3174,"GBR":0.211,"USA":0.1724,"MYS":0.0788,"AUS":0.0376,"CAN":0.0255},"tops":{"ZAF":7,"USA":5,"GBR":3},"n":15},"2010":{"total":131791,"share":{"ZAF":0.3228,"GBR":0.2024,"USA":0.1511,"MYS":0.0636,"GHA":0.0491,"AUS":0.0323},"tops":{"ZAF":7,"USA":4,"GBR":4},"n":15},"2011":{"total":145666,"share":{"ZAF":0.3497,"GBR":0.1843,"USA":0.1316,"MYS":0.0584,"GHA":0.0445,"AUS":0.0269},"tops":{"ZAF":7,"USA":5,"GBR":3},"n":15},"2012":{"total":126347,"share":{"GBR":0.2097,"ZAF":0.2077,"USA":0.1458,"BEN":0.0555,"MYS":0.0546,"GHA":0.0513},"tops":{"ZAF":7,"USA":5,"GBR":2,"SAU":1},"n":15},"2013":{"total":133572,"share":{"ZAF":0.1997,"GBR":0.1937,"USA":0.1324,"MYS":0.0658,"GHA":0.055,"BEN":0.0525},"tops":{"ZAF":7,"USA":4,"GBR":2,"GHA":1,"SAU":1},"n":15},"2014":{"total":152946,"share":{"ZAF":0.1745,"GBR":0.1713,"USA":0.1168,"GHA":0.0811,"MYS":0.0698,"BEN":0.0459},"tops":{"ZAF":7,"USA":3,"SAU":2,"GBR":2,"GHA":1},"n":15},"2015":{"total":168750,"share":{"ZAF":0.1599,"GBR":0.1487,"USA":0.1249,"MYS":0.089,"GHA":0.0853,"CAN":0.046},"tops":{"ZAF":7,"USA":5,"SAU":2,"GBR":1},"n":15},"2016":{"total":176364,"share":{"ZAF":0.1574,"GBR":0.1348,"USA":0.1273,"MYS":0.099,"GHA":0.07,"CAN":0.0512},"tops":{"ZAF":7,"USA":5,"SAU":2,"GBR":1},"n":15},"2017":{"total":167885,"share":{"ZAF":0.1629,"USA":0.14,"GBR":0.1211,"MYS":0.0826,"CAN":0.0596,"GHA":0.0574},"tops":{"ZAF":7,"USA":4,"SAU":2,"GBR":1,"IND":1},"n":15},"2018":{"total":163823,"share":{"ZAF":0.1676,"USA":0.1499,"GBR":0.1108,"CAN":0.0653,"MYS":0.062,"AUS":0.0438},"tops":{"ZAF":6,"USA":6,"SAU":2,"SEN":1},"n":15},"2019":{"total":156201,"share":{"ZAF":0.1682,"USA":0.163,"GBR":0.1223,"CAN":0.0683,"AUS":0.0485,"MYS":0.0414},"tops":{"ZAF":7,"USA":6,"SAU":1,"IND":1},"n":15},"2020":{"total":163848,"share":{"USA":0.1609,"ZAF":0.1439,"GBR":0.136,"CAN":0.0738,"AUS":0.042,"DEU":0.0412},"tops":{"ZAF":7,"USA":6,"SAU":1,"IND":1},"n":15},"2021":{"total":179446,"share":{"GBR":0.1762,"USA":0.1382,"ZAF":0.1266,"CAN":0.073,"DEU":0.0452,"AUS":0.0336},"tops":{"ZAF":7,"USA":4,"SAU":2,"GBR":1,"IND":1},"n":15},"2022":{"total":212252,"share":{"GBR":0.263,"USA":0.1362,"ZAF":0.0991,"CAN":0.067,"DEU":0.0417,"AUS":0.0377},"tops":{"ZAF":7,"USA":4,"IND":2,"SAU":1,"GBR":1},"n":15},"2023":{"total":256994,"share":{"GBR":0.3282,"USA":0.1285,"ZAF":0.0913,"CAN":0.0669,"AUS":0.0464,"DEU":0.0345},"tops":{"ZAF":7,"USA":3,"SAU":1,"AUS":1,"RWA":1,"GBR":1,"IND":1},"n":15}}},"central_asia":{"label":"Central Asia","members":["KAZ","KGZ","TJK","TKM","UZB"],"by_year":{"1999":{"total":41998,"share":{"RUS":0.4929,"KGZ":0.125,"TUR":0.1118,"TJK":0.1103,"KAZ":0.1049,"USA":0.0262},"tops":{"TUR":2,"RUS":1,"KAZ":1,"TJK":1},"n":5},"2000":{"total":39406,"share":{"RUS":0.5253,"KGZ":0.1332,"TJK":0.1118,"TUR":0.1074,"KAZ":0.0541,"USA":0.0292},"tops":{"RUS":2,"TUR":2,"TJK":1},"n":5},"2001":{"total":40804,"share":{"RUS":0.5865,"KGZ":0.1287,"TUR":0.0972,"KAZ":0.0622,"TJK":0.0492,"USA":0.0294},"tops":{"RUS":3,"TUR":1,"KGZ":1},"n":5},"2002":{"total":46859,"share":{"RUS":0.5303,"KGZ":0.2217,"TUR":0.0775,"KAZ":0.051,"TJK":0.0457,"USA":0.0267},"tops":{"RUS":2,"KGZ":2,"TUR":1},"n":5},"2003":{"total":45772,"share":{"RUS":0.497,"KGZ":0.2501,"TUR":0.0709,"KAZ":0.049,"TJK":0.03,"USA":0.0284},"tops":{"RUS":2,"KGZ":2,"TUR":1},"n":5},"2004":{"total":52877,"share":{"RUS":0.4792,"KGZ":0.2752,"KAZ":0.0601,"TUR":0.0569,"TJK":0.0317,"USA":0.0255},"tops":{"RUS":3,"TUR":1,"KGZ":1},"n":5},"2005":{"total":60397,"share":{"RUS":0.449,"KGZ":0.3564,"TUR":0.047,"KAZ":0.0412,"USA":0.0232,"TJK":0.0133},"tops":{"RUS":4,"KGZ":1},"n":5},"2006":{"total":64858,"share":{"RUS":0.408,"KGZ":0.3839,"KAZ":0.0521,"TUR":0.0451,"USA":0.0247,"UKR":0.0154},"tops":{"RUS":3,"TUR":1,"KGZ":1},"n":5},"2007":{"total":70243,"share":{"RUS":0.4029,"KGZ":0.3479,"KAZ":0.0645,"TUR":0.0428,"TJK":0.0349,"USA":0.0257},"tops":{"RUS":2,"KAZ":1,"TUR":1,"KGZ":1},"n":5},"2008":{"total":90678,"share":{"RUS":0.5491,"KGZ":0.2438,"KAZ":0.0483,"TUR":0.0342,"TJK":0.0259,"USA":0.0222},"tops":{"RUS":4,"KGZ":1},"n":5},"2009":{"total":81552,"share":{"RUS":0.5224,"KGZ":0.1968,"KAZ":0.0547,"TUR":0.0406,"TJK":0.0307,"USA":0.0271},"tops":{"RUS":4,"KGZ":1},"n":5},"2010":{"total":89942,"share":{"RUS":0.5536,"KGZ":0.1337,"TUR":0.042,"KAZ":0.0395,"UKR":0.0365,"TJK":0.0298},"tops":{"RUS":5},"n":5},"2011":{"total":101370,"share":{"RUS":0.5621,"KGZ":0.0884,"TUR":0.047,"UKR":0.044,"KAZ":0.0388,"BLR":0.037},"tops":{"RUS":5},"n":5},"2012":{"total":95799,"share":{"RUS":0.4992,"UKR":0.0716,"TUR":0.0657,"KGZ":0.0644,"BLR":0.0574,"KAZ":0.0442},"tops":{"RUS":4,"UKR":1},"n":5},"2013":{"total":124453,"share":{"RUS":0.5534,"UKR":0.084,"BLR":0.0561,"KGZ":0.0549,"TUR":0.0523,"KAZ":0.0385},"tops":{"RUS":4,"UKR":1},"n":5},"2014":{"total":161808,"share":{"RUS":0.5557,"UKR":0.1046,"TUR":0.0649,"BLR":0.0529,"KGZ":0.0443,"KAZ":0.0436},"tops":{"RUS":5},"n":5},"2015":{"total":183299,"share":{"RUS":0.5921,"UKR":0.0881,"TUR":0.0758,"BLR":0.0503,"KGZ":0.0382,"KAZ":0.031},"tops":{"RUS":5},"n":5},"2016":{"total":202464,"share":{"RUS":0.6279,"TUR":0.0753,"UKR":0.0615,"BLR":0.0447,"KGZ":0.0392,"KAZ":0.0306},"tops":{"RUS":5},"n":5},"2017":{"total":196306,"share":{"RUS":0.628,"TUR":0.081,"BLR":0.0454,"UKR":0.044,"KGZ":0.0384,"KAZ":0.0357},"tops":{"RUS":5},"n":5},"2018":{"total":216858,"share":{"RUS":0.6689,"TUR":0.0818,"BLR":0.0387,"KAZ":0.0308,"KGZ":0.028,"UKR":0.0271},"tops":{"RUS":5},"n":5},"2019":{"total":245463,"share":{"RUS":0.6352,"TUR":0.0954,"KAZ":0.0571,"BLR":0.037,"KGZ":0.0285,"KOR":0.0258},"tops":{"RUS":5},"n":5},"2020":{"total":291506,"share":{"RUS":0.5608,"KAZ":0.107,"TUR":0.0837,"KGZ":0.0658,"BLR":0.0393,"KOR":0.0294},"tops":{"RUS":5},"n":5},"2021":{"total":313081,"share":{"RUS":0.5223,"KGZ":0.1272,"TUR":0.0862,"KAZ":0.0831,"BLR":0.0336,"KOR":0.0283},"tops":{"RUS":5},"n":5},"2022":{"total":327050,"share":{"RUS":0.5072,"KGZ":0.1694,"TUR":0.0792,"KAZ":0.0638,"KOR":0.0292,"BLR":0.0285},"tops":{"RUS":4,"KGZ":1},"n":5},"2023":{"total":313358,"share":{"RUS":0.5166,"KGZ":0.1436,"TUR":0.1108,"KAZ":0.0501,"KOR":0.0343,"BLR":0.0223},"tops":{"RUS":5},"n":5}}},"lusophone":{"label":"Portuguese-speaking Africa","members":["AGO","MOZ","CPV","GNB","STP"],"by_year":{"1999":{"total":8680,"share":{"PRT":0.6607,"CUB":0.1085,"ZAF":0.0562,"USA":0.0456,"FRA":0.0388,"GBR":0.0304},"tops":{"PRT":5},"n":5},"2000":{"total":9411,"share":{"PRT":0.6094,"CUB":0.1001,"ZAF":0.0838,"USA":0.0461,"FRA":0.0378,"NAM":0.0326},"tops":{"PRT":5},"n":5},"2001":{"total":10471,"share":{"PRT":0.6346,"ZAF":0.0961,"CUB":0.078,"USA":0.045,"FRA":0.0339,"NAM":0.0293},"tops":{"PRT":5},"n":5},"2002":{"total":11062,"share":{"PRT":0.683,"ZAF":0.1139,"USA":0.046,"FRA":0.0306,"NAM":0.0278,"GBR":0.0193},"tops":{"PRT":5},"n":5},"2003":{"total":12859,"share":{"PRT":0.6445,"ZAF":0.1286,"CUB":0.0484,"USA":0.0425,"FRA":0.0322,"NAM":0.0276},"tops":{"PRT":5},"n":5},"2004":{"total":13807,"share":{"PRT":0.6656,"ZAF":0.1339,"USA":0.0423,"FRA":0.0323,"CUB":0.0299,"NAM":0.0186},"tops":{"PRT":5},"n":5},"2005":{"total":15693,"share":{"PRT":0.6614,"ZAF":0.1209,"BRA":0.0528,"USA":0.0396,"FRA":0.0273,"CUB":0.0233},"tops":{"PRT":5},"n":5},"2006":{"total":16772,"share":{"PRT":0.6171,"ZAF":0.1177,"BRA":0.0947,"USA":0.0495,"FRA":0.0307,"CUB":0.0188},"tops":{"PRT":5},"n":5},"2007":{"total":18797,"share":{"PRT":0.5965,"BRA":0.1249,"ZAF":0.1034,"USA":0.0552,"FRA":0.0266,"GBR":0.0174},"tops":{"PRT":4,"BRA":1},"n":5},"2008":{"total":13406,"share":{"PRT":0.2952,"BRA":0.2317,"ZAF":0.1487,"USA":0.0929,"RUS":0.0496,"FRA":0.0393},"tops":{"BRA":2,"PRT":2,"ZAF":1},"n":5},"2009":{"total":15558,"share":{"PRT":0.2628,"BRA":0.2485,"ZAF":0.1259,"USA":0.0933,"RUS":0.0379,"CUB":0.0349},"tops":{"BRA":2,"PRT":1,"ZAF":1,"CUB":1},"n":5},"2010":{"total":15803,"share":{"PRT":0.2671,"BRA":0.2262,"ZAF":0.1224,"USA":0.105,"RUS":0.0406,"CUB":0.0354},"tops":{"PRT":3,"BRA":1,"ZAF":1},"n":5},"2011":{"total":17001,"share":{"PRT":0.2607,"BRA":0.1948,"USA":0.1098,"ZAF":0.1086,"RUS":0.0408,"CUB":0.0403},"tops":{"PRT":3,"BRA":1,"ZAF":1},"n":5},"2012":{"total":15660,"share":{"PRT":0.2428,"BRA":0.2186,"USA":0.1325,"NAM":0.0531,"CUB":0.0487,"COD":0.0423},"tops":{"PRT":3,"BRA":1,"ZAF":1},"n":5},"2013":{"total":17395,"share":{"PRT":0.2266,"BRA":0.2206,"USA":0.1312,"ZAF":0.0676,"CUB":0.0547,"NAM":0.0487},"tops":{"PRT":3,"BRA":2},"n":5},"2014":{"total":19769,"share":{"PRT":0.2505,"BRA":0.2151,"CUB":0.0626,"ZAF":0.0598,"USA":0.0559,"NAM":0.0486},"tops":{"PRT":3,"BRA":2},"n":5},"2015":{"total":22529,"share":{"PRT":0.2362,"BRA":0.1934,"CUB":0.0771,"USA":0.0654,"ZAF":0.0536,"KEN":0.0495},"tops":{"PRT":4,"BRA":1},"n":5},"2016":{"total":25198,"share":{"PRT":0.2542,"BRA":0.1623,"CUB":0.0907,"USA":0.0695,"NAM":0.0559,"ZAF":0.0477},"tops":{"PRT":4,"BRA":1},"n":5},"2017":{"total":25841,"share":{"PRT":0.2701,"BRA":0.1568,"CUB":0.0926,"USA":0.0649,"ZAF":0.0432,"KEN":0.0431},"tops":{"PRT":4,"BRA":1},"n":5},"2018":{"total":24951,"share":{"PRT":0.3304,"BRA":0.1636,"CUB":0.0838,"USA":0.0631,"ZAF":0.0451,"RUS":0.0364},"tops":{"PRT":4,"BRA":1},"n":5},"2019":{"total":24818,"share":{"PRT":0.4037,"BRA":0.1604,"CUB":0.0759,"USA":0.054,"ZAF":0.0381,"RUS":0.0357},"tops":{"PRT":5},"n":5},"2020":{"total":29256,"share":{"PRT":0.4871,"BRA":0.1317,"RUS":0.056,"CUB":0.0519,"USA":0.0377,"ZAF":0.0268},"tops":{"PRT":5},"n":5},"2021":{"total":29443,"share":{"PRT":0.5487,"BRA":0.1295,"RUS":0.0503,"CUB":0.0362,"USA":0.0296,"ZAF":0.0216},"tops":{"PRT":5},"n":5},"2022":{"total":31600,"share":{"PRT":0.5882,"BRA":0.1243,"RUS":0.0439,"USA":0.0245,"CUB":0.0219,"ZAF":0.017},"tops":{"PRT":5},"n":5},"2023":{"total":36346,"share":{"PRT":0.6103,"BRA":0.1246,"RUS":0.0334,"ZAF":0.0217,"USA":0.0186,"FRA":0.0165},"tops":{"PRT":5},"n":5}}}},"inbound":{"USA":{"1998":430786,"1999":451935,"2005":590158,"2013":784427,"2014":842384,"2015":907251,"2016":971417,"2017":984898,"2018":987314,"2020":957475,"2021":833204,"2023":956923},"GBR":{"1998":209554,"1999":232540,"2000":222936,"2001":225722,"2002":227273,"2003":255233,"2004":300056,"2005":318399,"2006":330078,"2007":351470,"2008":341791,"2009":368968,"2010":389958,"2011":419946,"2012":427686,"2013":416693,"2014":428724,"2015":430833,"2016":432001,"2017":435734,"2018":452079,"2019":489019,"2020":550877,"2021":600589,"2022":674931,"2023":748461},"AUS":{"1998":109437,"1999":117485,"2000":105764,"2001":120987,"2002":179619,"2003":188160,"2004":166954,"2005":177034,"2006":184710,"2007":211526,"2008":230635,"2009":257637,"2010":271231,"2011":262597,"2012":249588,"2013":249868,"2014":266048,"2015":294438,"2016":335512,"2017":381202,"2018":444514,"2019":509160,"2020":458279,"2021":378439,"2022":382007,"2023":467074,"2024":580287},"DEU":{"2013":196619,"2014":210542,"2015":228756,"2016":244575,"2017":258873,"2018":311738,"2019":333233,"2020":368717,"2021":376359,"2022":403473,"2023":423197,"2024":438260},"CAN":{"1998":28116,"1999":32466,"2000":36450,"2001":42711,"2002":49572,"2003":59067,"2004":65001,"2005":69126,"2006":68520,"2007":92881,"2008":93479,"2009":95590,"2010":106284,"2011":120960,"2012":135187,"2013":151244,"2014":164274,"2015":171603,"2016":189478,"2017":209979,"2018":224548,"2019":279168,"2020":323157,"2021":312630,"2022":336837,"2023":389181},"FRA":{"1999":130952,"2000":137085,"2001":147402,"2002":165437,"2003":221567,"2004":237587,"2005":236518,"2006":247510,"2007":246612,"2008":243436,"2009":249143,"2010":259935,"2011":268212,"2012":271399,"2013":228639,"2014":235123,"2015":239409,"2016":245349,"2017":258380,"2018":229623,"2019":246378,"2020":252444,"2021":252856,"2022":263459,"2023":276217,"2024":284865},"RUS":{"2000":41210,"2001":64103,"2002":70735,"2003":68602,"2004":75786,"2005":90450,"2006":77438,"2007":60288,"2008":136791,"2009":129690,"2011":165910,"2012":173627,"2014":213347,"2016":243752,"2017":250658,"2018":262416,"2019":282922,"2021":321845,"2022":340326,"2023":336453},"JPN":{"1998":55751,"1999":56552,"2013":135803,"2014":132685,"2015":131980,"2016":143457,"2017":164338,"2018":182748,"2019":202907,"2020":222661,"2021":216241,"2022":199298,"2023":181821},"CHN":{"2006":36386,"2007":42138,"2008":51038,"2009":61211,"2010":71673,"2011":79638,"2012":88979,"2013":96409,"2014":108217,"2015":123127,"2016":137527,"2017":157108,"2018":178271,"2019":201177,"2020":225100,"2021":221653,"2022":210903,"2023":200892,"2024":194327},"TUR":{"1998":18662,"1999":18337,"2000":17654,"2001":16656,"2002":16328,"2003":12729,"2004":15298,"2005":18166,"2006":19079,"2007":19257,"2008":20219,"2009":21898,"2010":25838,"2011":31118,"2012":38590,"2013":54387,"2014":48183,"2015":72178,"2016":87903,"2017":108076,"2018":125138,"2019":154505,"2020":185047,"2021":224048,"2022":244027,"2023":301634},"ARE":{"2011":48653,"2012":54162,"2018":199958,"2019":204942,"2020":210030,"2021":208453,"2022":225845,"2023":237034,"2024":238986},"MYS":{"1998":3128,"1999":3508,"2000":18892,"2001":16480,"2002":27731,"2003":30407,"2004":23441,"2006":24404,"2007":30581,"2008":41310,"2009":57824,"2010":64749,"2011":63625,"2012":56203,"2014":99648,"2015":111443,"2016":124133,"2017":100765,"2019":81953,"2020":89193,"2021":92519,"2022":100437,"2023":109036,"2024":128907},"KOR":{"1998":2538,"1999":2869,"2000":3373,"2001":3850,"2002":4956,"2003":7843,"2004":10778,"2005":15497,"2006":22260,"2007":31943,"2008":40322,"2009":50030,"2010":59194,"2011":62675,"2012":59472,"2013":55536,"2014":52451,"2015":54540,"2016":61888,"2017":70796,"2018":84749,"2019":98857,"2020":111568,"2021":118528,"2022":123280,"2023":127624,"2024":143939},"SAU":{"1999":6086,"2000":7561,"2003":21395,"2004":12199,"2005":12999,"2006":13687,"2007":17716,"2008":18725,"2009":19906,"2010":26871,"2011":34922,"2012":46566,"2013":62143,"2014":71773,"2015":73077,"2016":79854,"2017":78344,"2018":73977,"2019":73216,"2020":69005,"2021":63417,"2022":64874,"2024":114886},"ARG":{"1998":2833,"2000":3255,"2016":75688,"2017":88873,"2018":109226,"2019":116330,"2020":121577,"2021":117794,"2022":137116,"2023":126566},"IRN":{"2003":1450,"2004":1791,"2005":1932,"2006":2322,"2007":2092,"2008":1233,"2009":1451,"2010":3182,"2011":4342,"2012":4512,"2013":7057,"2014":11288,"2015":13767,"2016":18698,"2017":21036,"2018":20580,"2019":21601,"2020":24379,"2021":90147,"2022":130591},"KGZ":{"2001":7967,"2002":11921,"2003":13440,"2004":16249,"2005":23565,"2006":27316,"2007":27205,"2008":25603,"2009":20236,"2010":16425,"2011":13180,"2012":10167,"2013":11263,"2014":12071,"2015":12723,"2016":14823,"2017":15149,"2018":16534,"2019":19626,"2020":36596,"2021":61418,"2022":80701,"2023":72853,"2024":55827},"EGY":{"2003":27158,"2004":29064,"2005":30723,"2006":33563,"2007":35031,"2010":49011,"2013":43993,"2014":47815,"2016":51162,"2020":34198,"2022":69828,"2023":86848,"2024":125128},"SGP":{"2008":40401,"2009":48623,"2010":47915,"2011":52959,"2012":48938,"2016":53122,"2017":53204,"2018":51756,"2019":53030,"2020":54982,"2021":58269,"2022":66308,"2023":71239},"UZB":{"2006":148,"2007":248,"2008":312,"2009":381,"2010":433,"2011":378,"2012":474,"2013":573,"2014":684,"2015":762,"2016":724,"2017":603,"2018":700,"2021":4219,"2022":5503,"2023":4935,"2024":10819},"NLD":{"1999":13619,"2000":14012,"2001":16589,"2002":18874,"2003":20531,"2004":26154,"2005":26387,"2006":27037,"2007":27449,"2008":30052,"2009":23674,"2010":27968,"2011":38367,"2012":57506,"2013":68943,"2014":70692,"2015":86189,"2016":89920,"2017":96289,"2018":104015,"2019":108353,"2020":124876,"2021":135535},"ITA":{"1999":23496,"2000":24929,"2001":29228,"2002":28447,"2003":36137,"2004":40641,"2005":44921,"2006":49090,"2007":57271,"2008":68306,"2009":65873,"2010":69905,"2011":73584,"2012":77732,"2013":82450,"2014":87544,"2015":90419,"2016":92655,"2017":97563,"2018":106611,"2019":54855,"2020":58508,"2021":72284,"2022":89946,"2023":106450},"ESP":{"1999":32954,"2000":40689,"2001":39944,"2002":44860,"2003":53639,"2004":15050,"2005":17675,"2006":18206,"2007":32281,"2008":37726,"2009":48517,"2010":56018,"2011":62636,"2012":55759,"2013":56361,"2016":49837,"2017":64927,"2018":70912,"2019":77062,"2020":82269,"2021":80862,"2022":91692,"2023":102162,"2024":113649},"POL":{"1998":5595,"1999":5693,"2000":6117,"2001":6659,"2002":7380,"2003":7608,"2004":8118,"2005":10185,"2006":11365,"2007":13021,"2008":14965,"2009":16976,"2010":18356,"2011":20711,"2012":23525,"2013":27767,"2014":34664,"2015":43988,"2016":54734,"2017":63925,"2018":54354,"2019":55191,"2020":62091,"2021":73958,"2022":91751,"2023":89677,"2024":95120},"IND":{"2000":6988,"2001":7791,"2002":8145,"2003":7738,"2004":7589,"2005":11309,"2006":12374,"2011":27531,"2012":28335,"2013":34419,"2014":38992,"2015":41993,"2016":44766,"2017":46703,"2018":46077,"2019":47424,"2020":49348,"2021":48035,"2022":46659,"2023":45700}},"outbound":{"CHN":{"1998":134461,"1999":137674,"2000":156814,"2001":184149,"2002":228671,"2003":287825,"2004":333158,"2005":366401,"2006":374560,"2007":411827,"2008":447105,"2009":508745,"2010":581116,"2011":636262,"2012":678013,"2013":720446,"2014":771612,"2015":820450,"2016":868930,"2017":930743,"2018":1000311,"2019":1062965,"2020":1112552,"2021":1042394,"2022":1056071,"2023":1076015},"IND":{"1998":59200,"1999":60252,"2000":66892,"2001":84255,"2002":103974,"2003":120047,"2004":135461,"2005":147505,"2006":147714,"2007":165099,"2008":186253,"2009":206962,"2010":208408,"2011":205162,"2012":194105,"2013":195220,"2014":220569,"2015":260237,"2016":307989,"2017":345183,"2018":382666,"2019":466597,"2020":527277,"2021":521952,"2022":630549,"2023":833835},"VNM":{"1998":7774,"1999":8085,"2000":9309,"2001":10722,"2002":12541,"2003":15232,"2004":16898,"2005":20220,"2006":23614,"2007":28714,"2008":36427,"2009":43811,"2010":47329,"2011":51419,"2012":53446,"2013":56050,"2014":59534,"2015":68109,"2016":82751,"2017":94732,"2018":108443,"2019":125660,"2020":138912,"2021":139051,"2022":134278,"2023":128186},"DEU":{"1998":52162,"1999":53432,"2000":54807,"2001":57498,"2002":58484,"2003":63885,"2004":57795,"2005":64495,"2006":71030,"2007":78676,"2008":83297,"2009":93033,"2010":105232,"2011":114243,"2012":118702,"2013":120534,"2014":118533,"2015":117116,"2016":118099,"2017":122977,"2018":122544,"2019":122669,"2020":123454,"2021":126074,"2022":126207,"2023":128287},"NGA":{"1998":22300,"1999":22629,"2000":23548,"2001":24458,"2002":25743,"2003":28141,"2004":30943,"2005":34454,"2006":35630,"2007":38133,"2008":41811,"2009":50218,"2010":52661,"2011":57079,"2012":58162,"2013":64129,"2014":79720,"2015":92411,"2016":96562,"2017":85877,"2018":76337,"2019":69369,"2020":74413,"2021":85332,"2022":112498,"2023":146286},"KOR":{"1998":62025,"1999":66754,"2000":69472,"2001":76324,"2002":83130,"2003":87471,"2004":89376,"2005":94030,"2006":99599,"2007":106080,"2008":111417,"2009":118670,"2010":118176,"2011":117416,"2012":112801,"2013":113799,"2014":110018,"2015":107739,"2016":105318,"2017":105283,"2018":101515,"2019":101388,"2020":101901,"2021":88949,"2022":87310,"2023":89693},"UZB":{"1998":14134,"1999":14198,"2000":13943,"2001":11803,"2002":13402,"2003":13092,"2004":17538,"2005":23502,"2006":29312,"2007":32064,"2008":31456,"2009":29065,"2010":24353,"2011":23137,"2012":19167,"2013":20344,"2014":26083,"2015":28042,"2016":32818,"2017":34943,"2018":42254,"2019":52731,"2020":96873,"2021":122146,"2022":141000,"2023":120563},"NPL":{"1998":4410,"1999":4445,"2000":5038,"2001":5939,"2002":7188,"2003":8123,"2004":8712,"2005":10401,"2006":12415,"2007":16339,"2008":20136,"2009":25237,"2010":27424,"2011":29831,"2012":29619,"2013":32253,"2014":35846,"2015":40661,"2016":49575,"2017":64480,"2018":82189,"2019":93519,"2020":99012,"2021":89121,"2022":95300,"2023":108273},"FRA":{"1998":46309,"1999":47877,"2000":49981,"2001":52719,"2002":55291,"2003":56871,"2004":46054,"2005":48772,"2006":53497,"2007":54975,"2008":47216,"2009":53483,"2010":57424,"2011":60295,"2012":64350,"2013":76899,"2014":82243,"2015":86810,"2016":90965,"2017":94885,"2018":99699,"2019":103142,"2020":108818,"2021":105598,"2022":113473,"2023":115006},"KAZ":{"1998":20374,"1999":20525,"2000":20468,"2001":23713,"2002":27576,"2003":25735,"2004":27527,"2005":29163,"2006":27239,"2007":29362,"2008":46809,"2009":35931,"2010":39267,"2011":42244,"2012":42444,"2013":54153,"2014":66963,"2015":78140,"2016":90104,"2017":84750,"2018":88010,"2019":89238,"2020":79792,"2021":79473,"2022":78224,"2023":75396},"SAU":{"1998":10159,"1999":10484,"2000":10841,"2001":11929,"2002":12407,"2003":12021,"2004":11997,"2005":12728,"2006":14042,"2007":19074,"2008":25132,"2009":31630,"2010":47110,"2011":57040,"2012":66679,"2013":74749,"2014":83833,"2015":85657,"2016":89581,"2017":83588,"2018":76757,"2019":66433,"2020":58330,"2021":49382,"2022":43881,"2023":42366},"USA":{"1998":40025,"1999":43320,"2000":45452,"2001":50099,"2002":55036,"2003":55072,"2004":55238,"2005":58038,"2006":60465,"2007":64236,"2008":63616,"2009":65836,"2010":67139,"2011":70310,"2012":72809,"2013":75862,"2014":78096,"2015":80628,"2016":84021,"2017":86664,"2018":86032,"2019":102169,"2020":108566,"2021":102651,"2022":114885,"2023":118150},"GBR":{"1998":27016,"1999":26626,"2000":21266,"2001":24943,"2002":28887,"2003":29695,"2004":23348,"2005":22609,"2006":22849,"2007":24479,"2008":22075,"2009":23854,"2010":24641,"2011":28806,"2012":26627,"2013":28483,"2014":30107,"2015":31348,"2016":34309,"2017":36358,"2018":39065,"2019":39269,"2020":39890,"2021":39408,"2022":41406,"2023":40906},"PAK":{"1998":15405,"1999":15858,"2000":16665,"2001":18415,"2002":21308,"2003":22368,"2004":23801,"2005":24601,"2006":26366,"2007":28643,"2008":31177,"2009":35041,"2010":38058,"2011":39896,"2012":37974,"2013":40177,"2014":44090,"2015":47042,"2016":51122,"2017":52402,"2018":56499,"2019":58251,"2020":63409,"2021":70988,"2022":89913,"2023":114849},"IRN":{"1998":18215,"1999":17985,"2000":17442,"2001":17523,"2002":18014,"2003":19267,"2004":20844,"2005":23278,"2006":25023,"2007":29403,"2008":33144,"2009":39705,"2010":44491,"2011":50713,"2012":51834,"2013":49454,"2014":51473,"2015":51851,"2016":53553,"2017":53980,"2018":57651,"2019":60442,"2020":69404,"2021":74972,"2022":86429,"2023":99161},"MAR":{"1998":35846,"1999":35960,"2000":40072,"2001":42973,"2002":49030,"2003":51816,"2004":43941,"2005":40979,"2006":42147,"2007":39545,"2008":41085,"2009":41720,"2010":42806,"2011":43755,"2012":44521,"2013":40254,"2014":42277,"2015":44776,"2016":47356,"2017":51027,"2018":52657,"2019":56466,"2020":62346,"2021":69519,"2022":74046,"2023":75186},"TUR":{"1998":29917,"1999":30145,"2000":30476,"2001":32104,"2002":33745,"2003":33615,"2004":33312,"2005":35354,"2006":35683,"2007":37728,"2008":40421,"2009":43921,"2010":45523,"2011":46457,"2012":46358,"2013":45313,"2014":45174,"2015":45637,"2016":45527,"2017":45670,"2018":47361,"2019":47170,"2020":51273,"2021":52446,"2022":60232,"2023":66914},"MYS":{"1998":59486,"1999":54795,"2000":45852,"2001":46120,"2002":47365,"2003":50149,"2004":48782,"2005":47688,"2006":49199,"2007":52846,"2008":56340,"2009":59832,"2010":59282,"2011":59131,"2012":59131,"2013":59859,"2014":62541,"2015":64750,"2016":65114,"2017":63816,"2018":62628,"2019":60649,"2020":57077,"2021":47360,"2022":46238,"2023":47047}}};
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const fmt = n => Math.round(n).toLocaleString("en-GB");
+const pct = x => Math.round(x * 100) + "%";
+const isDark = () => document.documentElement.dataset.theme === "dark" || (document.documentElement.dataset.theme !== "light" && matchMedia("(prefers-color-scheme: dark)").matches);
+const tip = $("tip");
+function showTip(h, x, y) { tip.innerHTML = h; tip.style.display = "block"; const w = tip.offsetWidth; x = Math.max(w / 2 + 8, Math.min(innerWidth - w / 2 - 8, x)); tip.style.left = x + scrollX + "px"; tip.style.top = y + scrollY + "px"; }
+function hideTip() { tip.style.display = "none"; }
+const redraws = [];
+function resp(box, render) { let last = 0; const go = force => { const w = Math.max(280, Math.round(box.clientWidth)); if (!force && Math.abs(w - last) < 4) return; last = w; box.innerHTML = ""; render(w, w < 560); }; new ResizeObserver(() => go()).observe(box); go(); redraws.push(() => go(true)); }
+const SVGNS = "http://www.w3.org/2000/svg";
+function svg(w, h) { const s = document.createElementNS(SVGNS, "svg"); s.setAttribute("viewBox", `0 0 ${w} ${h}`); s.setAttribute("role", "img"); return s; }
+function el(p, tag, a, txt) { const e = document.createElementNS(SVGNS, tag); for (const k in a) e.setAttribute(k, a[k]); if (txt != null) e.textContent = txt; p.appendChild(e); return e; }
+(function () { const k = "sa_theme"; let t = null; try { t = localStorage.getItem(k); } catch (e) {} if (t) document.documentElement.dataset.theme = t;
+  $("theme").onclick = () => { const d = isDark() ? "light" : "dark"; document.documentElement.dataset.theme = d; try { localStorage.setItem(k, d); } catch (e) {} redraws.forEach(f => f()); if (window.mapRestyle) mapRestyle(); }; })();
+
+let D = null, CJ = null, TOWNS = null, lmap = null;
+const S = { year: R.meta.last_year, sel: -1, hi: -1, dir: "out", uprov: -1, uyear: null, arcs: false };
+const MUTED = ["#B9AC9C", "#A3B5AA", "#B7A9C3", "#C7B59A", "#A9B5C8", "#C3A7A2", "#ABB79B", "#B5B0A2"];
+const MUTED_D = ["#6E655B", "#5D6B63", "#6B6175", "#77694F", "#5E6878", "#765D59", "#626D52", "#6A665C"];
+function hostCol(h) { if (h < 0) return css("--nodata"); const m = isDark() ? D.colDark : D.col; return m[h] || (isDark() ? MUTED_D : MUTED)[h % 8]; }
+const NM = i => i >= 0 ? D.names[i] : "";
+const IDX = {};
+function topOf(o, y) { const t = D.top[y]; return t ? t[o] : null; }
+function flowsYear(y) { if (!flowsYear.c[y]) { const a = D.flows[y] || [], out = new Map(), inn = new Map(); for (let k = 0; k < a.length; k += 3) { const h = a[k], o = a[k + 1], v = a[k + 2]; if (!out.has(o)) out.set(o, []); out.get(o).push([h, v]); if (!inn.has(h)) inn.set(h, []); inn.get(h).push([o, v]); } for (const m of [out, inn]) for (const v of m.values()) v.sort((p, q) => q[1] - p[1]); flowsYear.c[y] = { out, inn }; } return flowsYear.c[y]; }
+flowsYear.c = {};
+const METH = ["reported", "filled between reported years", "carried from the nearest reported year"];
+
+/* ===== small chart helpers ===== */
+function lineChart(box, series, opt = {}) {
+  resp(box, (W, narrow) => {
+    const H = opt.h || (narrow ? 260 : 300), L = opt.left || 52, Rr = narrow ? 92 : 128, T = 12, B = 26;
+    const xs = series.flatMap(s => s.pts.map(p => p[0])), ys = series.flatMap(s => s.pts.map(p => p[1]));
+    if (!xs.length) { box.innerHTML = '<p class="src">No data.</p>'; return; }
+    const x0 = opt.x0 || Math.min(...xs), x1 = opt.x1 || Math.max(...xs), y1 = opt.ymax || Math.max(...ys) * 1.05 || 1;
+    const X = x => L + (W - L - Rr) * (x - x0) / Math.max(1, x1 - x0), Y = y => T + (H - T - B) * (1 - y / y1);
+    const s = svg(W, H);
+    const ticks = opt.pct ? [0, .25, .5, .75, 1].filter(t => t <= y1 + 1e-9) : niceTicks(y1);
+    for (const t of ticks) { el(s, "line", { x1: L, x2: W - Rr, y1: Y(t), y2: Y(t), stroke: css("--rule") }); el(s, "text", { x: L - 6, y: Y(t) + 4, "text-anchor": "end", class: "lab s m" }, opt.pct ? Math.round(t * 100) + "%" : short(t)); }
+    const step = (x1 - x0) > 12 ? 5 : (x1 - x0) > 6 ? 2 : 1;
+    for (let x = Math.ceil(x0 / step) * step; x <= x1; x += step) el(s, "text", { x: X(x), y: H - 6, "text-anchor": "middle", class: "lab s m" }, opt.xlab ? opt.xlab(x) : x);
+    const labs = [];
+    for (const se of series) {
+      const d = se.pts.map((p, i) => (i ? "L" : "M") + X(p[0]).toFixed(1) + " " + Y(p[1]).toFixed(1)).join("");
+      el(s, "path", { d, fill: "none", stroke: se.col, "stroke-width": se.w || 2.5, "stroke-linejoin": "round", "stroke-linecap": "round" });
+      for (const p of se.pts) if (p[2]) el(s, "circle", { cx: X(p[0]), cy: Y(p[1]), r: 2.6, fill: css("--card"), stroke: se.col, "stroke-width": 1.2 });
+      const lp = se.pts[se.pts.length - 1]; if (lp) labs.push({ y: Y(lp[1]), x: X(lp[0]), t: se.name, c: se.col, v: lp[1] });
+    }
+    labs.sort((a, b) => a.y - b.y); for (let i = 1; i < labs.length; i++) if (labs[i].y - labs[i - 1].y < 13) labs[i].y = labs[i - 1].y + 13;
+    for (const l of labs) el(s, "text", { x: l.x + 6, y: l.y + 4, class: "lab b", fill: l.c, style: `fill:${l.c}` }, (narrow && l.t.length > 12 ? l.t.slice(0, 11) + "." : l.t));
+    const hov = el(s, "rect", { x: L, y: T, width: W - L - Rr, height: H - T - B, fill: "transparent" });
+    hov.addEventListener("mousemove", e => { const r = s.getBoundingClientRect(), xv = Math.round(x0 + (x1 - x0) * ((e.clientX - r.left) * W / r.width - L) / (W - L - Rr)); const rows = series.map(se => { const p = se.pts.find(q => q[0] === xv); return p ? `<span style="color:${se.col}">■</span> ${esc(se.name)}: ${opt.pct ? pct(p[1]) : fmt(p[1])}${p[2] ? " (filled)" : ""}` : null; }).filter(Boolean); if (rows.length) showTip(`<b>${opt.xlab ? opt.xlab(xv) : xv}</b><br>${rows.join("<br>")}`, e.pageX - scrollX, e.pageY - scrollY); });
+    hov.addEventListener("mouseleave", hideTip);
+    box.appendChild(s);
+  });
+}
+function niceTicks(m) { const p = Math.pow(10, Math.floor(Math.log10(m))), n = m / p, st = (n > 5 ? 2 : n > 2 ? 1 : .5) * p; const t = []; for (let v = 0; v <= m; v += st) t.push(v); return t; }
+function short(v) { return v >= 1e6 ? (v / 1e6).toFixed(v % 1e6 ? 1 : 0) + "m" : v >= 1e3 ? Math.round(v / 1e3) + "k" : String(Math.round(v)); }
+function hbars(box, rows, opt = {}) {
+  resp(box, (W, narrow) => {
+    const lw = narrow ? 118 : 150, rh = 23, H = rows.length * rh + 6, max = Math.max(1, ...rows.map(r => r[1]));
+    const s = svg(W, H);
+    rows.forEach((r, i) => {
+      const y = i * rh + 3, w = Math.max(1, (W - lw - 66) * r[1] / max);
+      el(s, "text", { x: lw - 6, y: y + 14, "text-anchor": "end", class: "lab" }, r[0].length > (narrow ? 15 : 20) ? r[0].slice(0, narrow ? 14 : 19) + "." : r[0]);
+      el(s, "rect", { x: lw, y: y + 2, width: w, height: rh - 7, fill: r[2] || css("--accent"), rx: 2 });
+      el(s, "text", { x: lw + w + 5, y: y + 14, class: "lab m" }, fmt(r[1]) + (r[3] != null ? "  " + r[3] : ""));
+    });
+    box.appendChild(s);
+  });
+}
+
+/* ===== map ===== */
+const LY = { base: "plain", hills: true, hillK: 50, names: false, nameLvl: 0, lines: true, lineK: 45, colour: 90 };
+const LYDEF = { ...LY };
+try { Object.assign(LY, JSON.parse(localStorage.getItem("sa_layers") || "{}")); } catch (e) {}
+const saveLY = () => { try { localStorage.setItem("sa_layers", JSON.stringify(LY)); } catch (e) {} };
+let tiles = {}, landL = null, borderL = null, hillL = null, hillCv = null, HILLIMG = null, dotL = null, arcL = null, nameL = null, renderer = null;
+const WORLD = window.L ? L.latLngBounds([-85.0511, -180], [85.0511, 180]) : null;
+const CanvasOverlay = window.L ? L.ImageOverlay.extend({ _initImage() { const c = this._image = this._url; L.DomUtil.addClass(c, "leaflet-image-layer"); if (this._zoomAnimated) L.DomUtil.addClass(c, "leaflet-zoom-animated"); c.onselectstart = L.Util.falseFn; c.onmousemove = L.Util.falseFn; } }) : null;
+function styleCountries() {
+  if (!landL) return;
+  const plain = LY.base === "plain", land = css("--land"), k = LY.colour / 100, y = String(S.year);
+  landL.eachLayer(l => {
+    const i = l.feature.properties.i, t = i >= 0 ? topOf(i, y) : null;
+    if (!t) { l.setStyle({ stroke: false, fillColor: plain ? css("--nodata") : land, fillOpacity: plain ? .9 : .25 }); return; }
+    const share = t[1] / 1000, op = (.5 + .5 * Math.min(1, share / .6)) * k, dim = S.hi >= 0 && t[0] !== S.hi;
+    l.setStyle({ fillColor: hostCol(t[0]), fillOpacity: dim ? op * .18 : (plain ? op : op * .85), stroke: !!t[2] || i === S.sel, color: i === S.sel ? css("--fg") : css("--fg"), weight: i === S.sel ? 2.4 : 1.1, dashArray: i === S.sel ? null : "3 3", opacity: dim ? .2 : .85 });
+  });
+}
+function drawDots() {
+  dotL.clearLayers();
+  const y = String(S.year), t = D.top[y] || {}, cnt = new Map();
+  for (const o in t) cnt.set(t[o][0], (cnt.get(t[o][0]) || 0) + 1);
+  const arr = [...cnt].sort((a, b) => b[1] - a[1]); const max = arr.length ? arr[0][1] : 1;
+  arr.forEach(([h, n], rank) => {
+    const c = D.cent[h]; if (!c) return;
+    const r = 5 + 17 * Math.sqrt(n / max);
+    const m = L.circleMarker([c[1], c[0]], { renderer, radius: r, color: isDark() ? "#000" : "#fff", weight: 2, fillColor: hostCol(h), fillOpacity: S.hi >= 0 && S.hi !== h ? .25 : .95 });
+    m.bindTooltip(`<b>${esc(NM(h))}</b><br>number one for ${n} countr${n > 1 ? "ies" : "y"} in ${y}`, { direction: "top", offset: [0, -r] });
+    m.on("click", () => { S.hi = S.hi === h ? -1 : h; refresh(); });
+    m.addTo(dotL);
+    if (n >= 3) L.marker([c[1], c[0]], { interactive: false, keyboard: false, icon: L.divIcon({ className: "hostlab", html: String(n), iconSize: [30, 14], iconAnchor: [15, 7] }) }).addTo(dotL);
+  });
+  return arr;
+}
+function arc(a, b, k = .2) {
+  let [y1, x1] = a, [y2, x2] = b, shift = 0; if (Math.abs(x2 - x1) > 180) { shift = x2 < x1 ? 360 : -360; x2 += shift; }
+  const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1, cx = mx - dy * k, cy = Math.max(-80, Math.min(80, my + dx * k)), out = [];
+  for (let t = 0; t <= 1.0001; t += 1 / 32) { const u = 1 - t; out.push([u * u * y1 + 2 * u * t * cy + t * t * y2, u * u * x1 + 2 * u * t * cx + t * t * x2]); }
+  return shift ? [out, out.map(([y, x]) => [y, x - shift])] : [out];
+}
+function drawArcs() {
+  arcL.clearLayers(); if (S.sel < 0 || !S.arcs) return;
+  const y = String(S.year), F = flowsYear(y), list = (S.dir === "out" ? F.out.get(S.sel) : F.inn.get(S.sel)) || [], c0 = D.cent[S.sel]; if (!c0) return;
+  const top = list.slice(0, 10), max = top.length ? top[0][1] : 1;
+  for (const [j, v] of top.slice().reverse()) {
+    const c1 = D.cent[j]; if (!c1) continue;
+    const a = S.dir === "out" ? [c0[1], c0[0]] : [c1[1], c1[0]], b = S.dir === "out" ? [c1[1], c1[0]] : [c0[1], c0[0]];
+    const col = S.dir === "out" ? hostCol(j) : hostCol(S.sel);
+    const ln = L.polyline(arc(a, b), { renderer, color: col, weight: 1 + 7 * Math.sqrt(v / max), opacity: .85, lineCap: "round", interactive: true });
+    ln.bindTooltip(`<b>${esc(NM(S.dir === "out" ? S.sel : j))} to ${esc(NM(S.dir === "out" ? j : S.sel))}</b><br>${fmt(v)} students, ${y}`, { sticky: true });
+    ln.addTo(arcL);
+  }
+}
+function keys(arr) {
+  const y = String(S.year);
+  $("keys").innerHTML = arr.map(([h, n]) => `<button class="key" data-h="${h}" aria-pressed="${S.hi === h}"><i style="background:${hostCol(h)}"></i>${esc(NM(h))}<b>${n}</b></button>`).join("") || '<p class="src">No data this year.</p>';
+  $("keys").querySelectorAll(".key").forEach(b => b.onclick = () => { const h = +b.dataset.h; S.hi = S.hi === h ? -1 : h; refresh(); });
+  const cy = R.coverage_by_year.find(d => d.year === +y), unc = R.uncertain_by_year[y] || 0;
+  const miss = cy ? cy.biggest_missing.filter(m => m[1] >= 20000).map(m => `${NM(D.codes.indexOf(m[0]))} (${fmt(m[1])})`) : [];
+  $("mapNote").textContent = `${y}: ${cy ? fmt(cy.students_counted) : ""} students counted abroad in ${cy ? cy.hosts : ""} host countries with origin data. ${miss.length ? "Large hosts with a total but no origins this year: " + miss.join(", ") + ". " : ""}${unc} countries are drawn with a dashed outline because a host without origin data could plausibly be their number one. Grey: fewer than 50 students counted abroad, or no data. Scroll to zoom after clicking the map.`;
+}
+function cardFor(i) {
+  const y = String(S.year), t = topOf(i, y);
+  $("cardH").textContent = NM(i);
+  if (!t) { $("card").innerHTML = `<p class="sub">No students from ${esc(NM(i))} are counted abroad in ${y}.</p>`; return; }
+  const u = D.unc[i + "_" + y];
+  const unc = u ? `<p class="warn">Uncertain: ${u.split(";").map(s => { const [c, v] = s.split(":"); return `${esc(NM(D.codes.indexOf(c)))} has no origin data this year but could hold about ${fmt(+v)}`; }).join("; ")}.</p>` : "";
+  $("card").innerHTML = `<div class="big" style="color:${hostCol(t[0])}">${esc(NM(t[0]))}</div><p class="sub">${pct(t[1] / 1000)} of the ${fmt(t[3])} students from ${esc(NM(i))} counted abroad in ${y} (${fmt(t[5])})${t[4] >= 0 ? `; next: ${esc(NM(t[4]))}` : ""}.</p>${unc}<button class="btn" id="toX">Open in the explorer</button>`;
+  $("toX").onclick = () => { selectCountry(i); document.getElementById("xq").scrollIntoView({ behavior: "smooth", block: "center" }); };
+}
+function refresh() { styleCountries(); const arr = drawDots(); keys(arr); drawArcs(); if (S.sel >= 0) { cardFor(S.sel); explorer(); } }
+
+function composeHills() {
+  if (!HILLIMG) return;
+  const k = LY.hillK / 100, dark = isDark() || LY.base === "dark", n = HILLIMG.width;
+  const g = hillCv.getContext("2d"), out = g.createImageData(n, n), s = HILLIMG.data, d = out.data;
+  const sh = dark ? [0, 0, 0] : [40, 40, 52];
+  for (let i = 0; i < s.length; i += 4) {
+    const a = s[i] / 255, h = s[i + 1] / 255;
+    if (a >= h * .6) { d[i] = sh[0]; d[i + 1] = sh[1]; d[i + 2] = sh[2]; d[i + 3] = Math.min(255, a * 255 * k * (dark ? 1.1 : .9)); }
+    else { d[i] = 255; d[i + 1] = 255; d[i + 2] = 255; d[i + 3] = h * 255 * k * (dark ? .25 : .6); }
+  }
+  g.putImageData(out, 0, 0);
+}
+function loadHills() {
+  if (HILLIMG) return Promise.resolve();
+  return new Promise((ok, bad) => { const im = new Image(); im.onload = () => { const c = document.createElement("canvas"); c.width = im.width; c.height = im.height; const x = c.getContext("2d", { willReadFrequently: true }); x.drawImage(im, 0, 0); HILLIMG = x.getImageData(0, 0, c.width, c.height); hillCv.width = c.width; hillCv.height = c.height; ok(); }; im.onerror = bad; im.src = "data/hills.png"; });
+}
+function placeNames() {
+  if (!nameL) return; nameL.clearLayers(); if (!LY.names || !TOWNS) return;
+  const z = lmap.getZoom(), bb = lmap.getBounds().pad(.05), lvl = LY.nameLvl;
+  const minR = lvl === 0 ? (z >= 5 ? 2 : 3) : lvl === 1 ? (z >= 6 ? 0 : z >= 5 ? 1 : z >= 4 ? 2 : 3) : (z >= 4 ? 0 : z >= 3 ? 1 : 2);
+  const boxes = [], cap = lvl === 2 ? 420 : 260; let n = 0;
+  for (const t of TOWNS) {
+    if (t[3] < minR || !bb.contains([t[2], t[1]])) continue;
+    const p = lmap.latLngToContainerPoint([t[2], t[1]]), fs = t[3] >= 3 ? 12 : 11;
+    const bx = [p.x - 4, p.y - 8, p.x + 10 + t[0].length * fs * .6, p.y + 7];
+    if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+    boxes.push(bx);
+    L.marker([t[2], t[1]], { pane: "names", interactive: false, keyboard: false, icon: L.divIcon({ className: "town r" + t[3], html: `<i></i>${esc(t[0])}`, iconSize: null, iconAnchor: [3, 6] }) }).addTo(nameL);
+    if (++n >= cap) break;
+  }
+}
+function applyLayers() {
+  for (const k in tiles) { if (k === LY.base) tiles[k].addTo(lmap); else tiles[k].remove(); }
+  lmap.getContainer().classList.toggle("sat", LY.base === "satellite");
+  lmap.getContainer().style.background = LY.base === "plain" ? css("--sea") : (LY.base === "dark" ? "#2b2b2b" : LY.base === "satellite" ? "#0b1a26" : "#e8e8e8");
+  styleCountries();
+  if (LY.hills) { loadHills().then(() => { composeHills(); hillL.addTo(lmap); }).catch(() => {}); } else hillL.remove();
+  if (LY.lines) { borderL.addTo(lmap); borderL.setStyle({ color: LY.base === "satellite" || LY.base === "dark" || isDark() ? "#f2eee6" : css("--line"), opacity: .15 + .85 * LY.lineK / 100, weight: .4 + LY.lineK / 100 }); } else borderL.remove();
+  if (LY.names) nameL.addTo(lmap); else nameL.remove();
+  placeNames();
+}
+function initLayers() {
+  const Ctl = L.Control.extend({ options: { position: "topright" }, onAdd() {
+    const d = L.DomUtil.create("div"); L.DomEvent.disableClickPropagation(d); L.DomEvent.disableScrollPropagation(d);
+    d.innerHTML = `<button class="lyrBtn" aria-expanded="false" aria-controls="lyrPanel">Map layers</button>
+<div class="lyrPanel" id="lyrPanel" hidden>
+ <div class="row"><label for="lyBase" style="font-weight:600">Base map</label><div class="sub"><select id="lyBase" aria-label="Base map"><option value="plain">Plain paper (offline)</option><option value="light">Light grey (Esri)</option><option value="dark">Dark grey (Esri)</option><option value="satellite">Satellite (Esri)</option></select></div></div>
+ <div class="row"><label><input type="checkbox" id="lyHills"> Hills and mountains</label><div class="sub"><span>strength</span><input type="range" id="lyHillK" min="10" max="100" step="5" aria-label="Hill shading strength"></div></div>
+ <div class="row"><label><input type="checkbox" id="lyNames"> Place names</label><div class="sub"><span>how many</span><select id="lyNameLvl" aria-label="How many place names"><option value="0">Big cities only</option><option value="1">Cities and towns</option><option value="2">Lots</option></select></div></div>
+ <div class="row"><label><input type="checkbox" id="lyLines"> Borders and coasts</label><div class="sub"><span>strength</span><input type="range" id="lyLineK" min="10" max="100" step="5" aria-label="Border line strength"></div></div>
+ <div class="row"><label style="font-weight:600">Colour</label><div class="sub"><span>strength</span><input type="range" id="lyColour" min="20" max="100" step="5" aria-label="Colour strength"></div></div>
+ <button class="reset" id="lyReset">Reset layers</button>
+</div>`;
+    return d; } });
+  lmap.addControl(new Ctl());
+  const q = $, btn = lmap.getContainer().querySelector(".lyrBtn"), pan = q("lyrPanel");
+  btn.onclick = () => { const o = pan.hidden; pan.hidden = !o; btn.setAttribute("aria-expanded", o); };
+  const sync = () => { q("lyBase").value = LY.base; q("lyHills").checked = LY.hills; q("lyHillK").value = LY.hillK; q("lyNames").checked = LY.names; q("lyNameLvl").value = LY.nameLvl; q("lyLines").checked = LY.lines; q("lyLineK").value = LY.lineK; q("lyColour").value = LY.colour; };
+  const on = (id, ev, f) => q(id).addEventListener(ev, e => { f(e.target); saveLY(); applyLayers(); drawDots(); });
+  on("lyBase", "change", t => { LY.base = t.value; if (t.value === "satellite") { LY.hills = false; q("lyHills").checked = false; } });
+  on("lyHills", "change", t => LY.hills = t.checked); on("lyHillK", "input", t => { LY.hillK = +t.value; LY.hills = true; q("lyHills").checked = true; });
+  on("lyNames", "change", t => LY.names = t.checked); on("lyNameLvl", "change", t => { LY.nameLvl = +t.value; LY.names = true; q("lyNames").checked = true; });
+  on("lyLines", "change", t => LY.lines = t.checked); on("lyLineK", "input", t => { LY.lineK = +t.value; LY.lines = true; q("lyLines").checked = true; });
+  on("lyColour", "input", t => LY.colour = +t.value);
+  q("lyReset").onclick = () => { Object.assign(LY, LYDEF); saveLY(); sync(); applyLayers(); };
+  sync();
+  lmap.on("zoomend moveend", placeNames);
+}
+window.mapRestyle = () => { if (!lmap) return; applyLayers(); refresh(); };
+
+/* ===== time ===== */
+let playT = null;
+function setYear(y) { S.year = y; $("year").value = y; $("yearBig").textContent = y; refresh(); }
+function play() {
+  if (playT) { clearInterval(playT); playT = null; $("play").textContent = "▶ Play"; return; }
+  if (S.year >= R.meta.last_year) setYear(R.meta.first_year);
+  $("play").textContent = "❚❚ Pause";
+  playT = setInterval(() => { if (S.year >= R.meta.last_year) { play(); return; } setYear(S.year + 1); }, 750);
+}
+
+/* ===== search ===== */
+function suggest(inp, list, items, pick) {
+  let cur = -1, res = [];
+  const draw = () => { list.innerHTML = res.map((r, i) => `<li role="option" aria-selected="${i === cur}" data-i="${i}">${esc(r[0])}${r[2] ? ` <span>${esc(r[2])}</span>` : ""}</li>`).join(""); list.style.display = res.length ? "block" : "none"; list.querySelectorAll("li").forEach(li => li.onmousedown = e => { e.preventDefault(); go(+li.dataset.i); }); };
+  const go = i => { const r = res[i]; if (!r) return; inp.value = r[0]; list.style.display = "none"; pick(r[1]); };
+  inp.addEventListener("input", () => { const q = inp.value.trim().toLowerCase(); cur = -1; res = q ? items().filter(r => r[0].toLowerCase().includes(q)).sort((a, b) => (a[0].toLowerCase().startsWith(q) ? 0 : 1) - (b[0].toLowerCase().startsWith(q) ? 0 : 1) || (b[3] || 0) - (a[3] || 0)).slice(0, 12) : []; draw(); });
+  inp.addEventListener("keydown", e => { if (e.key === "ArrowDown") { cur = Math.min(res.length - 1, cur + 1); draw(); e.preventDefault(); } else if (e.key === "ArrowUp") { cur = Math.max(0, cur - 1); draw(); e.preventDefault(); } else if (e.key === "Enter") { go(cur < 0 ? 0 : cur); } else if (e.key === "Escape") { list.style.display = "none"; } });
+  inp.addEventListener("blur", () => setTimeout(() => list.style.display = "none", 150));
+}
+const countryItems = () => D.names.map((n, i) => [n, i, "", (D.outbound[i] && D.outbound[i][String(R.meta.last_year)]) || 0]).filter(r => D.top[String(R.meta.last_year)][r[1]] || D.inbound[r[1]]);
+
+/* ===== explorer ===== */
+function selectCountry(i, fly) {
+  S.sel = i; S.arcs = true; $("xq").value = NM(i);
+  if (fly && lmap && D.cent[i]) lmap.flyTo([D.cent[i][1], D.cent[i][0]], Math.max(lmap.getZoom(), 3), { duration: .6 });
+  refresh();
+}
+function explorer() {
+  const i = S.sel; if (i < 0) return;
+  const y = String(S.year), F = flowsYear(y), out = S.dir === "out";
+  const list = (out ? F.out.get(i) : F.inn.get(i)) || [];
+  const tot = list.reduce((a, b) => a + b[1], 0);
+  const ob = D.outbound[i] && D.outbound[i][y], ib = D.inbound[i] && D.inbound[i][y];
+  const m = D.meth[i] && D.meth[i][y];
+  $("xcard").innerHTML = `<div class="big">${esc(NM(i))}, ${y}</div><p class="src">${out ? `${fmt(tot)} students from ${esc(NM(i))} counted in host countries with origin data${ob ? ` (UNESCO estimates ${fmt(ob)} abroad in all)` : ""}.` : (list.length ? `${fmt(tot)} international students in ${esc(NM(i))} by country of origin${m != null ? ", " + METH[m] : ""}${ib ? ` (total reported: ${fmt(ib)})` : ""}.` : `${esc(NM(i))} does not report its international students by origin for ${y}${ib ? `; its total is ${fmt(ib)}` : ""}.`)}</p>`;
+  $("xbarsH").textContent = out ? "Top destinations" : "Top countries of origin";
+  hbars($("xbars"), list.slice(0, 12).map(([j, v]) => [NM(j), v, out ? hostCol(j) : css("--accent"), tot ? pct(v / tot) : null]));
+  // over time: top five partners in the selected year (or overall)
+  const partners = list.slice(0, 5).map(r => r[0]);
+  const series = partners.map((j, k) => {
+    const pts = [];
+    for (let yy = R.meta.first_year; yy <= R.meta.last_year; yy++) {
+      const FF = flowsYear(String(yy)), l = (out ? FF.out.get(i) : FF.inn.get(i)) || [], r = l.find(q => q[0] === j);
+      const host = out ? j : i, mm = D.meth[host] && D.meth[host][yy];
+      if (r) pts.push([yy, r[1], mm > 0]);
+    }
+    return { name: NM(j), col: out ? hostCol(j) : ["#2349C9", "#D62839", "#F2A900", "#1B7F4C", "#7A3DB8"][k], pts };
+  });
+  $("xlineH").textContent = out ? "Students in each of today's top five destinations" : "Students from each of today's top five origins";
+  lineChart($("xline"), series, { h: 280 });
+  $("xnote").textContent = out ? "Counts in each destination as reported by that destination. Hollow points are filled years." : "Counts as reported by this country. Hollow points are filled years.";
+}
+
+/* ===== stories ===== */
+function storyCharts() {
+  const B = R.blocs, yrs = []; for (let y = R.meta.first_year; y <= R.meta.last_year; y++) yrs.push(String(y));
+  const bl = [["francophone_africa", "FRA", "French-official Africa to France", "#7A3DB8"], ["maghreb", "FRA", "Maghreb to France", "#B07CF0"], ["central_asia", "RUS", "Central Asia to Russia", "#1B7F4C"], ["lusophone", "PRT", "Lusophone Africa to Portugal", "#0EA5A0"], ["anglophone_africa", "GBR", "English-official Africa to UK", "#D62839"]];
+  lineChart($("cBlocs"), bl.map(([k, h, n, c]) => ({ name: n.split(" to ")[0], col: c, pts: yrs.filter(y => B[k].by_year[y]).map(y => [+y, B[k].by_year[y].share[h] || 0]) })), { pct: true, ymax: 1 });
+  const mg = [["TUR", "#8C1C13"], ["RUS", "#1B7F4C"], ["ARE", "#5E7C8A"], ["CHN", "#C9A227"], ["KOR", "#2349C9"], ["MYS", "#B5651D"], ["SAU", "#8DB33A"]];
+  lineChart($("cMagnets"), mg.map(([c, col]) => ({ name: ({ TUR: "Turkey", RUS: "Russia", ARE: "UAE", CHN: "China", KOR: "South Korea", MYS: "Malaysia", SAU: "Saudi Arabia" })[c], col, pts: Object.entries(R.inbound[c]).map(([y, v]) => [+y, v]).filter(p => p[0] >= 1999 && p[0] <= R.meta.last_year).sort((a, b) => a[0] - b[0]) })));
+  lineChart($("cIC"), [["CHN", "China", "#C9A227"], ["IND", "India", "#F26419"]].map(([c, n, col]) => ({ name: n, col, pts: Object.entries(R.outbound[c]).map(([y, v]) => [+y, v]).filter(p => p[0] >= 1999 && p[0] <= R.meta.last_year).sort((a, b) => a[0] - b[0]) })));
+}
+
+/* ===== UK ===== */
+let WORLDP = null;
+function ukData() {
+  const U = D.uk, y = String(S.uyear), arr = S.uprov < 0 ? U.total[y] : (U.data[S.uprov] || {})[y];
+  const rows = []; if (arr) for (let k = 0; k < arr.length; k += 2) rows.push([arr[k], arr[k + 1]]);
+  rows.sort((a, b) => b[1] - a[1]); return rows;
+}
+function ukMap(box, rows) {
+  resp(box, (W, narrow) => {
+    const H = Math.round(W * .44), s = svg(W, H), U = D.uk;
+    const byIso = new Map(); rows.forEach(([c, v]) => { const i = U.iso[c]; if (i >= 0) byIso.set(i, (byIso.get(i) || 0) + v); });
+    const max = Math.max(1, ...byIso.values());
+    const X = x => (x + 170) / 360 * W, Y = y => (84 - y) / 142 * H;
+    const dark = isDark(), lo = dark ? [45, 52, 80] : [222, 228, 245], hi = dark ? [120, 160, 255] : [22, 52, 170];
+    for (const f of CJ.features) {
+      const i = f.properties.i, v = byIso.get(i) || 0;
+      const t = v ? Math.log1p(v) / Math.log1p(max) : 0;
+      const col = v ? `rgb(${lo.map((a, k) => Math.round(a + (hi[k] - a) * t)).join(",")})` : css("--nodata");
+      const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+      const d = polys.map(p => p.map(r => r.map((q, k) => (k ? "L" : "M") + X(q[0]).toFixed(1) + " " + Y(Math.max(-56, q[1])).toFixed(1)).join("") + "Z").join("")).join("");
+      const p = el(s, "path", { d, fill: col, stroke: css("--card"), "stroke-width": .4 });
+      if (f.properties.iso === "GBR") p.setAttribute("fill", css("--accent2"));
+      p.addEventListener("mousemove", e => showTip(`<b>${esc(f.properties.n)}</b><br>${f.properties.iso === "GBR" ? "the UK" : fmt(v) + " students"}`, e.pageX - scrollX, e.pageY - scrollY));
+      p.addEventListener("mouseleave", hideTip);
+    }
+    box.appendChild(s);
+  });
+}
+function ukDraw() {
+  const U = D.uk, rows = ukData(), tot = rows.reduce((a, b) => a + b[1], 0), y = S.uyear;
+  const name = S.uprov < 0 ? "All UK universities and colleges" : U.providers[S.uprov][0];
+  $("ucard").innerHTML = `<div class="big" style="font:800 24px/1.12 var(--display)">${esc(name)}</div><p class="src">${fmt(tot)} non-UK students in ${y - 1}/${String(y).slice(2)} from ${rows.filter(r => r[1] > 0).length} countries${rows[0] ? `; biggest: ${esc(U.countries[rows[0][0]])} (${pct(rows[0][1] / tot)})` : ""}. Red: the UK.</p>`;
+  ukMap($("umap"), rows);
+  hbars($("ubars"), rows.slice(0, 15).map(([c, v]) => [U.countries[c].replace(/ \(Special Administrative Region of China\)/, "").replace(/ \(European Union\)/, ""), v, css("--accent"), pct(v / tot)]));
+  const top5 = rows.slice(0, 5).map(r => r[0]), cols = ["#2349C9", "#D62839", "#F2A900", "#1B7F4C", "#7A3DB8"];
+  lineChart($("uline"), top5.map((c, k) => ({ name: U.countries[c].replace(/ \(.*\)/, ""), col: cols[k], pts: U.years.map(yy => { const a = S.uprov < 0 ? U.total[yy] : (U.data[S.uprov] || {})[yy]; let v = 0; if (a) for (let q = 0; q < a.length; q += 2) if (a[q] === c) v = a[q + 1]; return [yy, v]; }) })), { h: 260, xlab: yy => `${String(yy - 1).slice(2)}/${String(yy).slice(2)}` });
+}
+function initUK() {
+  const U = D.uk; S.uyear = U.years[U.years.length - 1];
+  $("uyear").innerHTML = U.years.slice().reverse().map(y => `<option value="${y}">${y - 1}/${String(y).slice(2)}</option>`).join("");
+  $("uyear").onchange = e => { S.uyear = +e.target.value; ukDraw(); };
+  $("uall").onclick = () => { S.uprov = -1; $("uq").value = ""; ukDraw(); };
+  suggest($("uq"), $("usug"), () => U.providers.map((p, i) => [p[0], i, fmt(p[4]) + " non-UK", p[4]]), i => { S.uprov = i; ukDraw(); });
+  ukDraw();
+}
+
+/* ===== boot ===== */
+async function boot() {
+  const [pd, cj, tw] = await Promise.all(["data/page.json", "data/countries.json", "data/towns.json"].map(u => fetch(u).then(r => r.json())));
+  D = pd; CJ = cj; TOWNS = tw;
+  D.codes.forEach((c, i) => IDX[c] = i);
+  storyCharts(); initUK();
+  suggest($("q"), $("sug"), countryItems, i => selectCountry(i, true));
+  suggest($("xq"), $("xsug"), countryItems, i => selectCountry(i, true));
+  document.querySelectorAll("#xdir .btn").forEach(b => b.onclick = () => { S.dir = b.dataset.d; document.querySelectorAll("#xdir .btn").forEach(x => x.setAttribute("aria-pressed", x === b)); refresh(); });
+  $("year").oninput = e => setYear(+e.target.value);
+  $("play").onclick = play;
+  if (!window.L) { $("loading").textContent = "The map library did not load."; selectCountry(IDX.NGA); return; }
+  lmap = L.map("lmap", { minZoom: innerWidth < 600 ? 1 : 2, maxZoom: 8, zoomSnap: .5, worldCopyJump: false, maxBounds: WORLD.pad(.05), maxBoundsViscosity: .8, scrollWheelZoom: false });
+  lmap.attributionControl.setPrefix('<a href="https://leafletjs.com">Leaflet</a>');
+  lmap.fitBounds([[-48, -140], [70, 160]]);
+  renderer = L.canvas({ padding: .3 });
+  for (const [k, p] of [["names", 640], ["borders", 270], ["hills", 260], ["land", 250]]) lmap.createPane(k).style.zIndex = p;
+  for (const k of ["names", "hills", "borders"]) lmap.getPane(k).style.pointerEvents = "none";
+  const esri = (svc, extra) => L.tileLayer(`https://server.arcgisonline.com/ArcGIS/rest/services/${svc}/MapServer/tile/{z}/{y}/{x}`, { maxZoom: 16, attribution: "Tiles © Esri" + (extra || "") });
+  tiles = { light: esri("Canvas/World_Light_Gray_Base"), dark: esri("Canvas/World_Dark_Gray_Base"), satellite: esri("World_Imagery", ", Maxar, Earthstar Geographics") };
+  landL = L.geoJSON(cj, { pane: "land", renderer: L.canvas({ pane: "land", padding: .3 }), style: () => ({ stroke: false, fillColor: css("--land"), fillOpacity: 1 }),
+    onEachFeature: (f, l) => {
+      l.on("click", () => { if (f.properties.i >= 0) { S.sel = f.properties.i; S.arcs = true; $("xq").value = NM(S.sel); refresh(); } });
+      l.on("mouseover", () => { const i = f.properties.i, t = i >= 0 ? topOf(i, String(S.year)) : null; l.bindTooltip(t ? `<b>${esc(NM(i))}</b><br>number one: ${esc(NM(t[0]))} (${pct(t[1] / 1000)})${t[2] ? "<br>uncertain" : ""}` : `<b>${esc(f.properties.n)}</b><br>no ranking`, { sticky: true }).openTooltip(); if (i >= 0 && S.sel < 0) cardFor(i); });
+    } }).addTo(lmap);
+  borderL = L.geoJSON(cj, { pane: "borders", interactive: false, renderer: L.canvas({ pane: "borders", padding: .3 }), style: () => ({ color: css("--line"), weight: 1, opacity: .5, fill: false }) });
+  hillCv = document.createElement("canvas");
+  hillL = new CanvasOverlay(hillCv, WORLD, { pane: "hills", interactive: false, attribution: "Hills: AWS Terrain Tiles" });
+  arcL = L.layerGroup().addTo(lmap); dotL = L.layerGroup().addTo(lmap); nameL = L.layerGroup();
+  L.control.scale({ imperial: false, position: "bottomleft" }).addTo(lmap);
+  lmap.attributionControl.addAttribution("UNESCO UIS, Natural Earth, GeoNames");
+  initLayers(); applyLayers();
+  lmap.on("click", () => lmap.scrollWheelZoom.enable());
+  $("loading").style.display = "none";
+  S.sel = IDX.NGA; $("xq").value = NM(S.sel);
+  refresh();
+}
+boot().catch(e => { $("loading").textContent = "Could not load the data: " + e.message; console.error(e); });
+</script>
+</body>
+</html>
